@@ -2,68 +2,49 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bloco de Notas</title>
+    <link rel="manifest" id="dynamic-manifest">
     <style>
         /* === RESET E VARIÁVEIS === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
             --c-bg-light: #ffffff; --c-text-light: #1f1f1f; --c-border-light: #e5e5e5;
-            --c-accent-light: #0074e0; --c-secondary-light: #f9f9f9; --c-hover-light: #f0f0f0;
-            --c-active-light: #e0e0e0;
+            --c-accent-light: #0074e0; --c-secondary-light: #f9f9f9; --c-hover-light: #f0f0f0; --c-active-light: #e0e0e0;
             --c-bg-dark: #1a1a1a; --c-text-dark: #f0f0f0; --c-border-dark: #444444;
-            --c-accent-dark: #60cdff; --c-secondary-dark: #2a2a2a; --c-hover-dark: #3a3a3a;
-            --c-active-dark: #404040;
+            --c-accent-dark: #60cdff; --c-secondary-dark: #2a2a2a; --c-hover-dark: #3a3a3a; --c-active-dark: #404040;
             --c-bg-sepia: #f4f0e8; --c-text-sepia: #4a3b2f; --c-border-sepia: #d0c8b8;
-            --c-accent-sepia: #6e5847; --c-secondary-sepia: #e9e4d9; --c-hover-sepia: #d8d2c6;
-            --c-active-sepia: #c8c0b3;
+            --c-accent-sepia: #6e5847; --c-secondary-sepia: #e9e4d9; --c-hover-sepia: #d8d2c6; --c-active-sepia: #c8c0b3;
             
             --f-sans: 'Segoe UI', 'Roboto', system-ui, sans-serif;
             --f-serif: Georgia, 'Times New Roman', serif;
             --f-mono: 'Cascadia Code', 'Consolas', 'Roboto Mono', 'Courier New', monospace;
+            --f-writer: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, serif;
+            --f-dev: 'JetBrains Mono', 'Fira Code', 'Menlo', 'Consolas', monospace;
+            
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        html, body { height: 100%; }
+        html, body { height: 100%; overscroll-behavior-y: none; }
         body {
-            font-family: var(--font-ui);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            height: 100dvh;
-            display: grid;
-            grid-template-rows: auto auto 1fr auto;
-            overflow: hidden;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-            --font-ui: system-ui, 'Segoe UI', Roboto, sans-serif;
-            font-size: 14px;
+            font-family: var(--font-ui); background: var(--bg-primary); color: var(--text-primary);
+            height: 100dvh; display: grid; grid-template-rows: auto auto 1fr auto;
+            overflow: hidden; -webkit-tap-highlight-color: transparent; touch-action: manipulation;
+            --font-ui: system-ui, 'Segoe UI', Roboto, sans-serif; font-size: 14px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        /* === TEMAS === */
-        body.theme-light {
-            --bg-primary: var(--c-bg-light); --text-primary: var(--c-text-light);
-            --border: var(--c-border-light); --accent: var(--c-accent-light);
-            --bg-secondary: var(--c-secondary-light); --hover: var(--c-hover-light);
-            --active: var(--c-active-light);
-        }
-        body.theme-dark {
-            --bg-primary: var(--c-bg-dark); --text-primary: var(--c-text-dark);
-            --border: var(--c-border-dark); --accent: var(--c-accent-dark);
-            --bg-secondary: var(--c-secondary-dark); --hover: var(--c-hover-dark);
-            --active: var(--c-active-dark);
-        }
-        body.theme-sepia {
-            --bg-primary: var(--c-bg-sepia); --text-primary: var(--c-text-sepia);
-            --border: var(--c-border-sepia); --accent: var(--c-accent-sepia);
-            --bg-secondary: var(--c-secondary-sepia); --hover: var(--c-hover-sepia);
-            --active: var(--c-active-sepia);
-        }
+        /* === TEMAS E FONTES === */
+        body.theme-light { --bg-primary: var(--c-bg-light); --text-primary: var(--c-text-light); --border: var(--c-border-light); --accent: var(--c-accent-light); --bg-secondary: var(--c-secondary-light); --hover: var(--c-hover-light); --active: var(--c-active-light); }
+        body.theme-dark { --bg-primary: var(--c-bg-dark); --text-primary: var(--c-text-dark); --border: var(--c-border-dark); --accent: var(--c-accent-dark); --bg-secondary: var(--c-secondary-dark); --hover: var(--c-hover-dark); --active: var(--c-active-dark); }
+        body.theme-sepia { --bg-primary: var(--c-bg-sepia); --text-primary: var(--c-text-sepia); --border: var(--c-border-sepia); --accent: var(--c-accent-sepia); --bg-secondary: var(--c-secondary-sepia); --hover: var(--c-hover-sepia); --active: var(--c-active-sepia); }
 
-        /* === FONTES DO EDITOR === */
         body.font-sans-serif { --font-editor: var(--f-sans); }
         body.font-serif      { --font-editor: var(--f-serif); }
         body.font-mono       { --font-editor: var(--f-mono); }
+        body.font-writer     { --font-editor: var(--f-writer); font-size: 16px; line-height: 1.8; }
+        body.font-dev        { --font-editor: var(--f-dev); font-variant-ligatures: contextual; }
 
         /* === HEADER E TOOLBAR === */
         .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); z-index: 10; position: relative;}
@@ -71,227 +52,148 @@
         .app-icon { width: 18px; height: 18px; fill: var(--accent); }
         .app-title { font-size: 13px; font-weight: 500; flex: 1; }
 
-        /* Botão do Menu (Invisível no Desktop) */
-        .btn-menu {
-            display: none;
-            background: transparent; border: none; color: var(--text-primary);
-            cursor: pointer; padding: 4px; border-radius: 4px;
-        }
+        .btn-menu { display: none; background: transparent; border: none; color: var(--text-primary); cursor: pointer; padding: 4px; border-radius: 4px; }
         .btn-menu svg { width: 22px; height: 22px; fill: currentColor; }
         .btn-menu:active { background: var(--active); }
 
-        .toolbar {
-            display: flex; align-items: center; padding: 0 6px; height: 34px;
-            gap: 1px; flex-wrap: nowrap; overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-        }
-        .toolbar button {
-            display: inline-flex; align-items: center; justify-content: center;
-            gap: 4px; padding: 4px 10px; font-size: 12px; line-height: 1;
-            color: var(--text-primary); background: transparent;
-            border: 1px solid transparent; border-radius: 6px;
-            cursor: pointer; transition: background 0.15s; white-space: nowrap;
-            flex-shrink: 0; font-family: var(--font-ui); min-height: 26px;
-        }
+        .toolbar { display: flex; align-items: center; padding: 0 6px; height: 34px; gap: 1px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        .toolbar::-webkit-scrollbar { display: none; }
+        .toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 10px; font-size: 12px; line-height: 1; color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; font-family: var(--font-ui); min-height: 26px; }
         .toolbar button:hover { background: var(--hover); }
         .toolbar button:active { background: var(--active); }
         .toolbar button svg { width: 15px; height: 15px; fill: currentColor; }
         .toolbar .separator { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
+        
+        #btn-install { color: var(--accent); font-weight: bold; border: 1px dashed var(--accent); display: none; }
 
         /* === ABAS === */
-        .tabs-bar {
-            background: var(--bg-secondary); display: flex; align-items: center;
-            overflow-x: auto; border-bottom: 1px solid var(--border);
-            padding: 2px 4px; gap: 2px; min-height: 36px;
-            -webkit-overflow-scrolling: touch;
-        }
-        .tab {
-            display: flex; align-items: center; padding: 4px 10px; font-size: 12px;
-            border-radius: 4px; background: transparent; color: var(--text-primary);
-            border: 1px solid transparent; cursor: pointer; white-space: nowrap;
-            font-family: var(--font-ui); transition: background 0.1s; min-width: 60px;
-            flex-shrink: 0; max-width: 150px; overflow: hidden; text-overflow: ellipsis;
-        }
-        .tab.active { background: var(--bg-primary); border-color: var(--border); font-weight: 500; }
-        .tab:hover { background: var(--hover); }
-        .tab span:first-child { overflow: hidden; text-overflow: ellipsis; }
-        .tab-close {
-            margin-left: 5px; font-size: 16px; line-height: 1; opacity: 0.5;
-            cursor: pointer; flex-shrink: 0; background: none; border: none;
-            color: inherit; padding: 0 2px;
-        }
-        .tab-close:hover { opacity: 1; }
-        .new-tab-btn {
-            padding: 4px 10px; font-size: 16px; font-weight: bold;
-            background: none; border: none; cursor: pointer; color: var(--accent);
-            flex-shrink: 0; line-height: 1;
-        }
+        .tabs-bar { background: var(--bg-secondary); display: flex; align-items: center; overflow-x: auto; border-bottom: 1px solid var(--border); padding: 2px 4px; gap: 2px; min-height: 36px; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        .tabs-bar::-webkit-scrollbar { display: none; }
+        
+        .tab { display: flex; align-items: center; padding: 4px 10px; font-size: 13px; border-radius: 4px; background: transparent; color: var(--text-primary); border: 1px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font-ui); transition: background 0.1s; min-width: 80px; flex-shrink: 0; max-width: 160px; user-select: none; }
+        .tab.active { background: var(--bg-primary); border-color: var(--border); font-weight: 500; border-bottom-color: transparent; margin-bottom: -1px; padding-bottom: 5px; }
+        .tab:hover:not(.active) { background: var(--hover); }
+        .tab span { overflow: hidden; text-overflow: ellipsis; pointer-events: none; flex-grow: 1; text-align: left;}
+        
+        .tab-close { margin-left: 5px; font-size: 16px; line-height: 1; opacity: 0.5; cursor: pointer; flex-shrink: 0; background: none; border: none; color: inherit; padding: 4px; border-radius: 50%; }
+        .tab-close:hover { opacity: 1; color: #ff4d4d; background: var(--hover); }
+        .tab.drag-over { border: 2px dashed var(--accent); opacity: 0.7; }
+        .new-tab-btn { padding: 4px 12px; font-size: 18px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--accent); flex-shrink: 0; line-height: 1; }
 
         /* === EDITOR === */
         .editor-container { overflow: hidden; position: relative; }
-        #editor {
-            width: 100%; height: 100%; padding: 16px;
-            background: var(--bg-primary); color: var(--text-primary);
-            font-size: 14px; line-height: 1.6; resize: none; outline: none;
-            border: none; font-family: var(--font-editor); font-weight: 400;
-        }
+        #editor { width: 100%; height: 100%; padding: 16px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; line-height: 1.6; resize: none; outline: none; border: none; font-family: var(--font-editor); font-weight: 400; transition: font-family 0.3s; }
 
-        /* === STATUS BAR === */
-        .status-bar {
-            background: var(--bg-secondary); border-top: 1px solid var(--border);
-            padding: 4px 12px; display: flex; align-items: center; flex-wrap: wrap;
-            gap: 12px; font-size: 11px; color: var(--text-primary); min-height: 26px;
-            font-family: var(--font-ui);
-        }
-        .stat-item { display: flex; align-items: baseline; gap: 3px; }
-        .stat-item strong { font-weight: 600; }
+        /* === STATUS BAR (Estilizada) === */
+        .status-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4px 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-primary); min-height: 26px; font-family: var(--font-ui); }
+        .stat-item { display: flex; align-items: baseline; gap: 4px; }
+        /* Números em destaque */
+        .stat-value { color: var(--accent); font-weight: 800; font-family: var(--f-mono); font-size: 12px; background: var(--bg-primary); padding: 0 4px; border-radius: 3px; border: 1px solid var(--border);}
 
         /* === TOAST === */
-        .toast-container {
-            position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column;
-            gap: 6px; z-index: 3000; pointer-events: none;
-        }
+        .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 3000; pointer-events: none; overflow: hidden; padding: 10px;}
         .toast {
-            background: var(--bg-secondary); color: var(--text-primary);
-            padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            font-size: 13px; display: flex; align-items: center; gap: 8px;
-            opacity: 0; transform: translateY(-10px); transition: all 0.25s;
-            pointer-events: auto; border: 1px solid var(--border);
+            background: var(--bg-primary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 13px; display: flex; align-items: center; gap: 8px;
+            opacity: 0; transform: translateX(50px) skewX(10deg); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+            pointer-events: auto; border-left: 4px solid var(--accent); position: relative; touch-action: pan-y;
         }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        .toast button { background: var(--accent); color: white; border: none; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
-        .toast button:hover { opacity: 0.9; }
+        .toast.show { opacity: 1; transform: translateX(0) skewX(0); }
+        .toast.slashing { transform: translateX(120%) skewX(-20deg) scaleY(0.5); opacity: 0; filter: blur(2px); transition: all 0.25s cubic-bezier(0.55, 0.085, 0.68, 0.53); box-shadow: -10px 0 20px var(--accent); }
+        .toast button { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;}
+        .toast button:hover { background: var(--accent); color: #fff; }
 
-        /* === MODAL === */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.3); display: flex; align-items: center;
-            justify-content: center; opacity: 0; pointer-events: none;
-            transition: opacity 0.2s; z-index: 2000;
-        }
+        /* === MODAL DE BUSCA === */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 2000; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal {
-            background: var(--bg-primary); border-radius: 12px; padding: 20px;
-            min-width: 300px; max-width: 90vw; box-shadow: 0 8px 32px rgba(0,0,0,0.25);
-            transform: scale(0.95); transition: transform 0.2s; color: var(--text-primary);
-        }
-        .modal-overlay.show .modal { transform: scale(1); }
-        .modal h3 { font-size: 16px; margin-bottom: 12px; }
-        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; }
-        .btn { padding: 8px 16px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; font-family: var(--font-ui); font-weight: 500;}
-        .btn-primary { background: var(--accent); color: white; }
-        .btn-secondary { background: var(--hover); color: var(--text-primary); }
-        .btn:active { opacity: 0.8; }
+        .modal { background: var(--bg-primary); border-radius: 12px; padding: 20px; min-width: 320px; max-width: 90vw; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transform: scale(0.9) translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--text-primary); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .modal::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 2px; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: scanline 3s linear infinite; }
+        @keyframes scanline { 0% { left: -100%; } 100% { left: 200%; } }
+        .modal-overlay.show .modal { transform: scale(1) translateY(0); }
+        .modal h3 { font-size: 16px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
+        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;}
+        .btn { padding: 8px 16px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; font-family: var(--font-ui); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; }
+        .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(0, 116, 224, 0.3); }
+        .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 116, 224, 0.4); }
+        .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+        
+        .search-input { width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; outline: none; font-family: var(--font-mono); font-size: 14px; margin-bottom: 12px; transition: border-color 0.3s;}
+        .search-input:focus { border-color: var(--accent); box-shadow: 0 0 5px rgba(0, 116, 224, 0.3); }
+        .radio-group { display: flex; gap: 16px; font-size: 13px; margin-bottom: 12px; }
+        .search-result { font-size: 12px; color: var(--accent); min-height: 18px; }
 
-        /* === RESPONSIVIDADE MOBILE (<= 600px) === */
+        /* === RESPONSIVIDADE MOBILE === */
         @media (max-width: 600px) {
-            /* Mostra o botão do menu e esconde itens da barra de título para priorizar espaço */
             .btn-menu { display: block; }
-            
-            /* Transforma a toolbar em um menu dropdown */
-            .toolbar {
-                display: none; /* Escondido por padrão */
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                height: auto;
-                background: var(--bg-secondary);
-                flex-direction: column;
-                align-items: stretch;
-                padding: 8px;
-                box-shadow: 0 8px 16px rgba(0,0,0,0.15);
-                border-bottom: 1px solid var(--border);
-                z-index: 100;
-            }
-            .toolbar.active {
-                display: flex;
-            }
-
-            /* Estilo dos botões dentro do menu dropdown */
-            .toolbar button {
-                justify-content: flex-start; /* Alinhamento à esquerda */
-                padding: 12px 16px;
-                font-size: 15px;
-                height: auto;
-                border-radius: 4px;
-            }
+            .toolbar { display: none; position: absolute; top: 100%; left: 0; right: 0; height: auto; background: var(--bg-secondary); flex-direction: column; align-items: stretch; padding: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); border-bottom: 1px solid var(--border); z-index: 100; transform-origin: top; animation: dropdown 0.2s ease-out forwards; }
+            @keyframes dropdown { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
+            .toolbar.active { display: flex; }
+            .toolbar button { justify-content: flex-start; padding: 12px 16px; font-size: 15px; height: auto; border-radius: 4px; }
             .toolbar button svg { width: 18px; height: 18px; margin-right: 12px; }
             .toolbar .separator { width: 100%; height: 1px; margin: 4px 0; }
-
-            /* Ajustes de legibilidade para Mobile */
-            #editor { 
-                padding: 16px; 
-                font-size: 16px; /* Tamanho ideal para leitura mobile */
-            }
-            .status-bar { 
-                font-size: 11px; 
-                gap: 8px; 
-                padding: 6px 10px; 
-            }
-            .tab { 
-                font-size: 13px; 
-                padding: 8px 12px; 
-            }
+            #editor { padding: 16px; font-size: 16px; }
+            .status-bar { font-size: 11px; gap: 8px; padding: 6px 10px; }
+            .tab { padding: 8px 12px; min-width: 90px;}
         }
     </style>
 </head>
-<body class="theme-light font-mono">
-    <!-- ===== HEADER ===== -->
-    <div class="header">
+<body class="theme-light font-sans-serif">
+    <!-- Header -->
+    <div class="header" id="appHeader">
         <div class="title-bar">
             <svg class="app-icon" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
             <span class="app-title">Bloco de Notas</span>
-            <!-- Botão Menu Responsivo -->
-            <button id="btn-menu" class="btn-menu" aria-label="Menu" title="Menu">
-                <svg viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg>
-            </button>
+            <button id="btn-menu" class="btn-menu" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg></button>
         </div>
         
-        <div class="toolbar" id="toolbarMenu" role="toolbar" aria-label="Barra de ferramentas">
+        <div class="toolbar" id="toolbarMenu" role="toolbar">
+            <button id="btn-install" title="Instalar App Offline"><svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2ZM12 17L7 12H10V7H14V12H17Z"/></svg> Instalar App</button>
             <button id="btn-open" title="Abrir arquivo (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H15V9H19M19,6L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V9L19,6Z"/></svg> Abrir</button>
-            <button id="btn-save" title="Salvar (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M19,9V5L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V10L19,9Z"/></svg> Salvar</button>
-            <button id="btn-save-as" title="Salvar como..."><svg viewBox="0 0 24 24"><path d="M13,9V5H11V9H8L12,13L16,9M5,20H19V18H5M5,16H19V14H5M5,12H19V10H5V12Z"/></svg> Salvar como</button>
+            <button id="btn-save" title="Download Rápido (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M19,9V5L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V10L19,9Z"/></svg> Salvar</button>
+            <button id="btn-save-as" title="Escolher Pasta e Formato"><svg viewBox="0 0 24 24"><path d="M13,9V5H11V9H8L12,13L16,9M5,20H19V18H5M5,16H19V14H5M5,12H19V10H5V12Z"/></svg> Salvar Como</button>
             <span class="separator"></span>
-            <button id="btn-paste" title="Colar texto do clipboard"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H7V7H17V4H19M9,2A1,1 0 0,1 10,3A1,1 0 0,1 9,4A1,1 0 0,1 8,3A1,1 0 0,1 9,2M15,2A1,1 0 0,1 16,3A1,1 0 0,1 15,4A1,1 0 0,1 14,3A1,1 0 0,1 15,2M12,8A3,3 0 0,0 9,11A3,3 0 0,0 12,14A3,3 0 0,0 15,11A3,3 0 0,0 12,8Z"/></svg> Colar</button>
-            <button id="btn-copy" title="Copiar tudo (Ctrl+Shift+C)"><svg viewBox="0 0 24 24"><path d="M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M19,21H8V7H19V21Z"/></svg> Copiar</button>
-            <button id="btn-clear" title="Limpar texto da aba (apagar tudo)"><svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Limpar</button>
+            <button id="btn-paste" title="Colar"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H7V7H17V4H19M9,2A1,1 0 0,1 10,3A1,1 0 0,1 9,4A1,1 0 0,1 8,3A1,1 0 0,1 9,2M15,2A1,1 0 0,1 16,3A1,1 0 0,1 15,4A1,1 0 0,1 14,3A1,1 0 0,1 15,2M12,8A3,3 0 0,0 9,11A3,3 0 0,0 12,14A3,3 0 0,0 15,11A3,3 0 0,0 12,8Z"/></svg> Colar</button>
+            <button id="btn-copy" title="Copiar tudo"><svg viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg> Copiar</button>
+            <button id="btn-clear" title="Limpar"><svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Limpar</button>
+            <span class="separator"></span>
+            <button id="btn-search" title="Buscar (Ctrl+F)"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Buscar</button>
+            <button id="btn-time" title="Inserir Data/Hora (Ctrl+D)"><svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg> Data/Hora</button>
             <span class="separator"></span>
             <button id="btn-font" title="Alternar fonte"><svg viewBox="0 0 24 24"><path d="M12,3L3,21H6.5L8.5,16H15.5L17.5,21H21L12,3M10,14L12,8.5L14,14H10Z"/></svg> Fonte</button>
-            <button id="btn-undo" title="Desfazer (Ctrl+Z)"><svg viewBox="0 0 24 24"><path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg> Desfazer</button>
-            <button id="btn-redo" title="Refazer (Ctrl+Y)"><svg viewBox="0 0 24 24"><path d="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.53,15.22L3.9,16C4.95,12.81 7.96,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z"/></svg> Refazer</button>
-            <span class="separator"></span>
-            <button id="btn-theme" title="Alternar tema"><svg id="icon-theme" viewBox="0 0 24 24"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z"/></svg> Tema</button>
+            <button id="btn-theme" title="Alternar tema"><svg id="icon-theme" viewBox="0 0 24 24"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/></svg> Tema</button>
         </div>
     </div>
     
-    <div class="tabs-bar" id="tabsBar" role="tablist" aria-label="Abas de documentos"></div>
-    
+    <div class="tabs-bar" id="tabsBar" role="tablist"></div>
     <input type="file" id="fileInput" accept=".txt,.md,.html,.text,text/plain,text/markdown,text/html" style="display: none;">
     
     <div class="editor-container" id="dropZone">
-        <textarea id="editor" placeholder="Digite algo..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true" aria-label="Editor de texto"></textarea>
+        <textarea id="editor" placeholder="Digite algo ou solte um arquivo aqui..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
     </div>
     
     <div class="status-bar" id="statusBar">
-        <span class="stat-item"><strong>Ln</strong> <span id="lineInfo">1</span>, <strong>Col</strong> <span id="colInfo">1</span></span>
-        <span class="stat-item"><strong>Caracteres:</strong> <span id="char-count">0</span></span>
-        <span class="stat-item"><strong>Espaços:</strong> <span id="space-count">0</span></span>
-        <span class="stat-item"><strong>Sentenças:</strong> <span id="sentence-count">0</span></span>
-        <span class="stat-item"><strong>Parágrafos:</strong> <span id="paragraph-count">0</span></span>
-        <span class="stat-item">⏱️ <strong id="reading-time">0 min</strong></span>
+        <span class="stat-item">Ln <span id="lineInfo" class="stat-value">1</span>, Col <span id="colInfo" class="stat-value">1</span></span>
+        <span class="stat-item">Caracteres: <span id="char-count" class="stat-value">0</span></span>
+        <span class="stat-item">Palavras: <span id="word-count" class="stat-value">0</span></span>
+        <span class="stat-item">Parágrafos: <span id="paragraph-count" class="stat-value">0</span></span>
+        <span class="stat-item">Tempo: <span id="reading-time" class="stat-value">0 min</span></span>
     </div>
     
     <div class="toast-container" id="toastContainer"></div>
 
-    <div class="modal-overlay" id="modalContent">
+    <!-- Modal de Busca -->
+    <div class="modal-overlay" id="searchModal">
         <div class="modal">
-            <h3>Download não suportado</h3>
-            <p style="font-size:14px; margin-bottom:12px;">Copie o texto abaixo manualmente:</p>
-            <textarea readonly id="modalTextarea" style="width:100%; height:150px; font-family: monospace; font-size:13px; resize: vertical; padding:8px;"></textarea>
-            <div class="modal-buttons" style="margin-top:12px;">
-                <button class="btn btn-primary" id="btn-copy-modal">Copiar texto</button>
-                <button class="btn btn-secondary" id="btn-close-modal">Fechar</button>
+            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Modo Rastreador</h3>
+            <input type="text" id="searchInput" class="search-input" placeholder="O que deseja encontrar?">
+            <div class="radio-group">
+                <label><input type="radio" name="searchScope" value="current" checked> Aba Atual</label>
+                <label><input type="radio" name="searchScope" value="all"> Todas as Abas</label>
+            </div>
+            <div id="searchResult" class="search-result"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="btn-close-search">Cancelar</button>
+                <button class="btn btn-primary" id="btn-do-search">Buscar Próximo</button>
             </div>
         </div>
     </div>
@@ -299,752 +201,440 @@
     <script>
     (function() {
         // ===================================================
-        // MÓDULO: Configurações e Constantes
+        // GERAÇÃO DINÂMICA PWA
+        // ===================================================
+        const manifest = {
+            name: "Bloco de Notas", short_name: "Notepad", description: "Ferramenta de anotações.",
+            display: "standalone", start_url: location.href, background_color: "#ffffff", theme_color: "#0074e0",
+            icons: [{ src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230074e0'%3E%3Cpath d='M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }]
+        };
+        const blobManifest = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
+        document.getElementById('dynamic-manifest').href = URL.createObjectURL(blobManifest);
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault(); deferredPrompt = e;
+            document.getElementById('btn-install').style.display = 'inline-flex';
+        });
+        document.getElementById('btn-install').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') document.getElementById('btn-install').style.display = 'none';
+                deferredPrompt = null;
+            }
+        });
+
+        // ===================================================
+        // CONFIGURAÇÕES
         // ===================================================
         const CONFIG = {
-            MAX_UNDO: 50,
-            WORDS_PER_MINUTE: 200,
-            UNDO_DEBOUNCE: 300,
-            STORAGE_KEY_DOCS: 'notepad_docs',
-            STORAGE_KEY_ACTIVE: 'notepad_activeId',
-            STORAGE_KEY_THEME: 'notepadTheme',
-            STORAGE_KEY_FONT: 'notepadFont',
+            STORAGE_KEY_DOCS: 'notepad_pro_docs', STORAGE_KEY_ACTIVE: 'notepad_pro_activeId',
+            STORAGE_KEY_THEME: 'notepad_pro_Theme', STORAGE_KEY_FONT: 'notepad_pro_Font',
             THEMES: ['theme-light', 'theme-dark', 'theme-sepia'],
-            FONTS: ['font-mono', 'font-sans-serif', 'font-serif'],
-            THEME_ICONS: {
-                'theme-light': 'M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2M3.34,7L7.5,6.65C6.9,7.16 6.36,7.78 5.94,8.5C5.5,9.24 5.25,10 5.11,10.79L3.34,7M3.36,17L5.12,13.23C5.26,14 5.53,14.78 5.95,15.5C6.37,16.24 6.91,16.86 7.5,17.37L3.36,17M20.65,7L18.88,10.79C18.74,10 18.47,9.23 18.05,8.5C17.63,7.78 17.1,7.15 16.5,6.64L20.65,7M20.64,17L16.5,17.36C17.09,16.85 17.62,16.22 18.04,15.5C18.46,14.77 18.73,14 18.87,13.21L20.64,17M12,22L9.59,18.56C10.33,18.83 11.14,19 12,19C12.82,19 13.63,18.83 14.37,18.56L12,22Z',
-                'theme-dark': 'M12,2A7,7 0 0,0 5,9C5,11.38 6.19,13.47 8,14.74V17A1,1 0 0,0 9,18H15A1,1 0 0,0 16,17V14.74C17.81,13.47 19,11.38 19,9A7,7 0 0,0 12,2M9,21A1,1 0 0,0 10,22H14A1,1 0 0,0 15,21V20H9V21Z',
-                'theme-sepia': 'M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9Z'
-            }
+            FONTS: ['font-sans-serif', 'font-serif', 'font-mono', 'font-writer', 'font-dev'],
+            FONT_NAMES: ['Sans-Serif (Moderna)', 'Serif (Clássica)', 'Monospace (Máquina)', 'Writer (Leitura Livre)', 'Dev (Código)'],
+            WORDS_PM: 200
         };
 
-        // ===================================================
-        // MÓDULO: Utilitários
-        // ===================================================
-        const Util = {
-            escapeHtml(text) {
-                const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-                return text.replace(/[&<>"']/g, c => map[c]);
-            },
-            getAutoTitle(content) {
-                const lines = content.split('\n');
-                const first = lines.find(l => l.trim() !== '') || 'Sem título';
-                return first.trim().substring(0, 30) + (first.trim().length > 30 ? '…' : '');
-            },
-            sanitizeFilename(name) {
-                return name.replace(/[\\/:*?"<>|]/g, '_');
-            },
-            countSentences(text) {
-                return (text.match(/[^.!?\s][.!?]+(?:\s|$)/g) || []).length;
-            },
-            countParagraphs(text) {
-                const blocks = text.split(/\n\s*\n/).filter(b => b.trim().length > 0);
-                return blocks.length;
-            },
-            detectFormat(doc) {
-                if (doc.handle) {
-                    const name = doc.handle.name || '';
-                    if (name.endsWith('.md')) return 'md';
-                    if (name.endsWith('.html') || name.endsWith('.htm')) return 'html';
-                    return 'txt';
-                }
-                if (doc.lastFormat) return doc.lastFormat;
-                const title = doc.title || '';
-                if (title.endsWith('.md')) return 'md';
-                if (title.endsWith('.html') || title.endsWith('.htm')) return 'html';
-                return 'txt';
-            }
-        };
-
-        // ===================================================
-        // MÓDULO: Armazenamento (localStorage com tratamento)
-        // ===================================================
         const StorageManager = {
-            saveDocs(documents, activeDocId) {
-                const toStore = documents.map(d => ({
-                    id: d.id, title: d.title, content: d.content,
-                    _autoTitle: d._autoTitle,
-                    scrollTop: d.scrollTop || 0,
-                    selectionStart: d.selectionStart || 0,
-                    selectionEnd: d.selectionEnd || 0,
-                    lastFormat: d.lastFormat || 'txt',
-                    undoStack: d.undoStack ? d.undoStack.slice(-CONFIG.MAX_UNDO) : [],
-                    redoStack: d.redoStack ? d.redoStack.slice(-CONFIG.MAX_UNDO) : []
+            saveDocs(docs, activeId) {
+                const toStore = docs.map(d => ({ 
+                    id: d.id, title: d.title, content: d.content, 
+                    scrollTop: d.scrollTop, selectionStart: d.selectionStart, 
+                    isAutoTitled: d.isAutoTitled 
                 }));
-                try {
-                    localStorage.setItem(CONFIG.STORAGE_KEY_DOCS, JSON.stringify(toStore));
-                    localStorage.setItem(CONFIG.STORAGE_KEY_ACTIVE, activeDocId);
-                } catch(e) {
-                    toStore.forEach(d => { d.undoStack = []; d.redoStack = []; });
-                    try {
-                        localStorage.setItem(CONFIG.STORAGE_KEY_DOCS, JSON.stringify(toStore));
-                    } catch(e2) {
-                        console.warn('Armazenamento esgotado.');
-                    }
-                }
+                try { localStorage.setItem(CONFIG.STORAGE_KEY_DOCS, JSON.stringify(toStore)); localStorage.setItem(CONFIG.STORAGE_KEY_ACTIVE, activeId); } catch(e) {}
             },
             loadDocs() {
-                let documents = [];
-                let activeDocId = null;
                 try {
                     const stored = localStorage.getItem(CONFIG.STORAGE_KEY_DOCS);
                     if (stored) {
-                        documents = JSON.parse(stored);
-                        documents.forEach(d => {
-                            d.id = String(d.id);
-                            if (d._autoTitle === undefined) d._autoTitle = true;
-                            if (!d.undoStack) d.undoStack = [];
-                            if (!d.redoStack) d.redoStack = [];
-                            if (!d.lastFormat) d.lastFormat = 'txt';
-                        });
-                        const activeId = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE);
-                        if (activeId && documents.some(d => d.id === activeId)) {
-                            activeDocId = activeId;
-                        } else if (documents.length > 0) {
-                            activeDocId = documents[0].id;
-                        }
+                        const docs = JSON.parse(stored);
+                        // Garante que o atributo isAutoTitled exista para legados
+                        docs.forEach(d => { if(d.isAutoTitled === undefined) d.isAutoTitled = false; });
+                        const active = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE) || docs[0]?.id;
+                        return { documents: docs, activeDocId: active };
                     }
                 } catch(e) {}
-                return { documents, activeDocId };
+                return { documents: [], activeDocId: null };
             }
         };
 
         // ===================================================
-        // MÓDULO: Gerenciador de Abas
+        // APLICAÇÃO PRINCIPAL
         // ===================================================
-        const TabManager = {
-            tabsBar: document.getElementById('tabsBar'),
-            render(documents, activeDocId, callbacks) {
-                this.tabsBar.innerHTML = '';
-                documents.forEach(doc => {
-                    const tab = document.createElement('div');
-                    tab.className = 'tab' + (doc.id === activeDocId ? ' active' : '');
-                    tab.setAttribute('role', 'tab');
-                    tab.setAttribute('aria-selected', doc.id === activeDocId);
-                    tab.innerHTML = `<span>${Util.escapeHtml(doc.title)}</span><button class="tab-close" aria-label="Fechar aba">&times;</button>`;
-                    tab.querySelector('span:first-child').addEventListener('click', () => callbacks.onSwitch(doc.id));
-                    tab.querySelector('span:first-child').addEventListener('dblclick', () => callbacks.onRename(doc.id));
-                    tab.querySelector('.tab-close').addEventListener('click', (e) => { e.stopPropagation(); callbacks.onClose(doc.id); });
-                    this.tabsBar.appendChild(tab);
-                });
-                const newBtn = document.createElement('button');
-                newBtn.className = 'new-tab-btn';
-                newBtn.textContent = '+';
-                newBtn.setAttribute('aria-label', 'Nova aba');
-                newBtn.addEventListener('click', callbacks.onNew);
-                this.tabsBar.appendChild(newBtn);
-            }
-        };
+        const App = {
+            documents: [], activeDocId: null, editor: document.getElementById('editor'),
+            themeIdx: 0, fontIdx: 0,
+            
+            init() {
+                const { documents, activeDocId } = StorageManager.loadDocs();
+                this.documents = documents.length ? documents : [this.createDoc('Nova Anotação', '', true)];
+                this.activeDocId = activeDocId && this.documents.some(d=>d.id===activeDocId) ? activeDocId : this.documents[0].id;
 
-        // ===================================================
-        // MÓDULO: Editor (Histórico, Estado)
-        // ===================================================
-        const EditorManager = {
-            editor: document.getElementById('editor'),
-            documents: [],
-            activeDocId: null,
-            undoTimeout: null,
-            
-            initDocHistory(doc) {
-                if (!doc.undoStack) doc.undoStack = [];
-                if (!doc.redoStack) doc.redoStack = [];
+                const savedFont = localStorage.getItem(CONFIG.STORAGE_KEY_FONT) || CONFIG.FONTS[0];
+                this.fontIdx = CONFIG.FONTS.indexOf(savedFont) > -1 ? CONFIG.FONTS.indexOf(savedFont) : 0;
+                this.applyFontClass();
+
+                const savedTheme = localStorage.getItem(CONFIG.STORAGE_KEY_THEME) || CONFIG.THEMES[0];
+                this.themeIdx = CONFIG.THEMES.indexOf(savedTheme) > -1 ? CONFIG.THEMES.indexOf(savedTheme) : 0;
+                this.applyThemeClass();
+
+                this.renderTabs();
+                this.switchToDoc(this.activeDocId);
+                this.bindEvents();
+                this.updateStats();
             },
-            
-            pushUndo() {
-                const doc = this.documents.find(d => d.id === this.activeDocId);
-                if (!doc) return;
-                const state = this._captureState();
-                const last = doc.undoStack[doc.undoStack.length-1];
-                if (last && last.content === state.content && last.scrollTop === state.scrollTop) return;
-                doc.undoStack.push(state);
-                if (doc.undoStack.length > CONFIG.MAX_UNDO) doc.undoStack.shift();
-                doc.redoStack = [];
+
+            createDoc(title, content, isAutoTitled = false) {
+                return { id: Date.now().toString() + Math.random().toString(36).substr(2,5), title, content, scrollTop: 0, selectionStart: 0, isAutoTitled };
             },
-            
-            undo() {
-                const doc = this.documents.find(d => d.id === this.activeDocId);
-                if (!doc || doc.undoStack.length === 0) return;
-                const current = this._captureState();
-                doc.redoStack.push(current);
-                const prev = doc.undoStack.pop();
-                this._applyState(prev);
-            },
-            
-            redo() {
-                const doc = this.documents.find(d => d.id === this.activeDocId);
-                if (!doc || doc.redoStack.length === 0) return;
-                const current = this._captureState();
-                doc.undoStack.push(current);
-                const next = doc.redoStack.pop();
-                this._applyState(next);
-            },
-            
-            _captureState() {
-                return {
-                    content: this.editor.value,
-                    selectionStart: this.editor.selectionStart,
-                    selectionEnd: this.editor.selectionEnd,
-                    scrollTop: this.editor.scrollTop
-                };
-            },
-            
-            _applyState(state) {
-                this.editor.value = state.content;
-                this.editor.selectionStart = state.selectionStart;
-                this.editor.selectionEnd = state.selectionEnd;
-                this.editor.scrollTop = state.scrollTop;
-            },
-            
-            scheduleUndo() {
-                clearTimeout(this.undoTimeout);
-                this.undoTimeout = setTimeout(() => this.pushUndo(), CONFIG.UNDO_DEBOUNCE);
-            },
-            
-            forceUndoNow() {
-                clearTimeout(this.undoTimeout);
-                this.pushUndo();
-            },
-            
-            switchToDoc(docId) {
-                const currentDoc = this.documents.find(d => d.id === this.activeDocId);
-                if (currentDoc) {
-                    currentDoc.content = this.editor.value;
-                    currentDoc.scrollTop = this.editor.scrollTop;
-                    currentDoc.selectionStart = this.editor.selectionStart;
-                    currentDoc.selectionEnd = this.editor.selectionEnd;
-                    if (currentDoc._autoTitle !== false) {
-                        currentDoc.title = Util.getAutoTitle(this.editor.value);
+
+            saveState() {
+                const doc = this.getActiveDoc();
+                if (doc) {
+                    doc.content = this.editor.value; doc.scrollTop = this.editor.scrollTop; doc.selectionStart = this.editor.selectionStart;
+                    // Lógica de nomenclatura automática corrigida
+                    if (doc.isAutoTitled) {
+                        const lines = doc.content.trim().split('\n');
+                        if (lines[0]) {
+                            doc.title = lines[0].substring(0, 25) + (lines[0].length > 25 ? '...' : '');
+                        } else {
+                            doc.title = 'Nova Anotação';
+                        }
                     }
                 }
-                this.activeDocId = docId;
-                const doc = this.documents.find(d => d.id === docId);
-                if (doc) {
-                    this.editor.value = doc.content;
-                    this.editor.scrollTop = doc.scrollTop || 0;
-                    this.editor.selectionStart = doc.selectionStart || 0;
-                    this.editor.selectionEnd = doc.selectionEnd || 0;
-                }
-                this.editor.focus();
+                StorageManager.saveDocs(this.documents, this.activeDocId);
             },
-            
-            clearActiveDoc() {
-                const doc = this.documents.find(d => d.id === this.activeDocId);
-                if (!doc) return;
-                this.forceUndoNow();
-                this.editor.value = '';
-                this.editor.scrollTop = 0;
-                this.editor.selectionStart = 0;
-                this.editor.selectionEnd = 0;
-                doc.content = '';
-                doc.undoStack = [];
-                doc.redoStack = [];
-                if (doc._autoTitle !== false) doc.title = 'Sem título';
-            }
-        };
 
-        // ===================================================
-        // MÓDULO: Gerenciador de Arquivos
-        // ===================================================
-        const FileManager = {
-            fileInput: document.getElementById('fileInput'),
-            
-            async saveDoc(doc, format) {
-                doc.content = EditorManager.editor.value;
-                const filename = Util.sanitizeFilename(doc.title) || 'nota';
-                const mimeMap = { txt: 'text/plain', md: 'text/markdown', html: 'text/html' };
-                const extMap = { txt: '.txt', md: '.md', html: '.html' };
-                const mime = mimeMap[format];
-                const ext = extMap[format];
+            getActiveDoc() { return this.documents.find(d => d.id === this.activeDocId); },
+
+            switchToDoc(id) {
+                this.saveState();
+                this.activeDocId = id;
+                const doc = this.getActiveDoc();
+                if (doc) {
+                    this.editor.value = doc.content; this.editor.scrollTop = doc.scrollTop || 0;
+                    this.editor.selectionStart = this.editor.selectionEnd = doc.selectionStart || 0;
+                }
+                this.renderTabs(); this.updateStats(); this.editor.focus();
+            },
+
+            addNewTab(title, content='', autoTitle=false) {
+                const doc = this.createDoc(title || 'Nova Anotação', content, autoTitle);
+                this.documents.push(doc);
+                this.switchToDoc(doc.id);
+            },
+
+            closeTab(id) {
+                if (this.documents.length <= 1) {
+                    this.documents[0].content = ''; this.documents[0].title = 'Nova Anotação'; this.documents[0].isAutoTitled = true;
+                    this.switchToDoc(this.documents[0].id);
+                    return;
+                }
+                const idx = this.documents.findIndex(d => d.id === id);
+                if (idx === -1) return;
+                const closedDoc = this.documents.splice(idx, 1)[0];
+                if (this.activeDocId === id) this.activeDocId = this.documents[Math.min(idx, this.documents.length - 1)].id;
                 
+                this.switchToDoc(this.activeDocId);
+                UI.showSwipeToast(`Aba fechada`, () => {
+                    this.documents.splice(idx, 0, closedDoc);
+                    this.switchToDoc(closedDoc.id);
+                });
+            },
+
+            // Salvar Rápido (Download Direto)
+            saveFile() {
+                const doc = this.getActiveDoc(); if(!doc) return;
+                this.saveState();
+                let ext = doc.title.includes('.') ? '' : '.txt';
+                let filename = doc.title.replace(/[^\w\s-.]/gi, '_') || 'anotacao';
+                
+                const blob = new Blob([doc.content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = filename + ext;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                UI.showSwipeToast('✓ Download rápido concluído');
+            },
+
+            // Salvar Como (Com Escolha de Pasta via File System Access API)
+            async saveFileAs() {
+                const doc = this.getActiveDoc(); if(!doc) return;
+                this.saveState();
+                
+                let defaultExt = '.md';
+                let filename = doc.title.replace(/[^\w\s-.]/gi, '_');
+                if(!filename.includes('.')) filename += defaultExt;
+
+                // Tenta usar a API moderna (Suportada em Chrome PC/Android recentes)
                 if (window.showSaveFilePicker) {
                     try {
                         const handle = await window.showSaveFilePicker({
-                            suggestedName: filename + ext,
-                            types: [{ description: 'Text files', accept: { [mime]: [ext] } }]
+                            suggestedName: filename,
+                            types: [
+                                { description: 'Documento Markdown', accept: { 'text/markdown': ['.md'] } },
+                                { description: 'Arquivo de Texto', accept: { 'text/plain': ['.txt'] } }
+                            ]
                         });
                         const writable = await handle.createWritable();
                         await writable.write(doc.content);
                         await writable.close();
-                        doc.handle = handle;
-                        doc.lastFormat = format;
-                        return true;
+                        UI.showSwipeToast('✓ Salvo na pasta escolhida!');
+                        return;
                     } catch(e) {
-                        if (e.name !== 'AbortError') throw e;
-                        return false;
+                        if (e.name !== 'AbortError') console.error(e);
+                        return; // O usuário cancelou
                     }
-                } else {
-                    try {
-                        const blob = new Blob([doc.content], { type: mime });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = filename + ext;
-                        document.body.appendChild(a);
-                        a.click();
-                        document.body.removeChild(a);
-                        setTimeout(() => URL.revokeObjectURL(url), 1000);
-                        doc.lastFormat = format;
-                        return true;
-                    } catch(e) {
-                        return false;
-                    }
+                } 
+                // Fallback: Se o navegador não suportar a API de pastas
+                alert("Seu navegador não suporta a escolha de pastas direto do app. O arquivo será enviado para a pasta de Downloads.");
+                this.saveFile(); 
+            },
+
+            renameActiveTab(doc) {
+                const newT = prompt('Renomear aba (ex: campo.md):', doc.title);
+                if(newT && newT.trim() !== '') { 
+                    doc.title = newT.trim(); 
+                    doc.isAutoTitled = false; 
+                    this.renderTabs(); this.saveState(); 
                 }
             },
-            
-            openFileViaPicker() {
-                this.fileInput.click();
+
+            // Renderizar Abas Corrigido (Eventos na DIV principal, não no span)
+            renderTabs() {
+                const bar = document.getElementById('tabsBar'); bar.innerHTML = '';
+                this.documents.forEach((doc, index) => {
+                    const t = document.createElement('div');
+                    t.className = 'tab' + (doc.id === this.activeDocId ? ' active' : '');
+                    t.draggable = true;
+                    t.innerHTML = `<span>${doc.title.replace(/</g, "&lt;")}</span><button class="tab-close" title="Fechar aba">&times;</button>`;
+                    
+                    // Clique na ABA (Area maior, resolve erro mobile)
+                    t.addEventListener('click', (e) => {
+                        if (e.target.closest('.tab-close')) return; // ignorado aqui, tratado abaixo
+                        if (this.activeDocId === doc.id) {
+                            // Clicou na aba que JÁ ESTÁ ativa -> Renomear
+                            this.renameActiveTab(doc);
+                        } else {
+                            this.switchToDoc(doc.id);
+                        }
+                    });
+
+                    // Fechar ABA
+                    t.querySelector('.tab-close').addEventListener('click', (e) => { 
+                        e.stopPropagation(); this.closeTab(doc.id); 
+                    });
+                    
+                    // Eventos Drag & Drop
+                    t.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', index); t.style.opacity = '0.5'; });
+                    t.addEventListener('dragend', () => { t.style.opacity = '1'; document.querySelectorAll('.tab').forEach(el=>el.classList.remove('drag-over')); });
+                    t.addEventListener('dragover', e => { e.preventDefault(); t.classList.add('drag-over'); });
+                    t.addEventListener('dragleave', () => t.classList.remove('drag-over'));
+                    t.addEventListener('drop', e => {
+                        e.preventDefault(); t.classList.remove('drag-over');
+                        const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
+                        if(fromIdx !== index) {
+                            const moved = this.documents.splice(fromIdx, 1)[0];
+                            this.documents.splice(index, 0, moved);
+                            this.renderTabs(); this.saveState();
+                        }
+                    });
+
+                    bar.appendChild(t);
+                });
+                const addBtn = document.createElement('button'); addBtn.className = 'new-tab-btn'; addBtn.textContent = '+';
+                addBtn.onclick = () => this.addNewTab('Nova Anotação', '', true); bar.appendChild(addBtn);
             },
-            
-            readFile(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = (ev) => resolve({ name: file.name, content: ev.target.result });
-                    reader.onerror = reject;
-                    reader.readAsText(file);
+
+            applyThemeClass() {
+                document.body.classList.remove(...CONFIG.THEMES);
+                document.body.classList.add(CONFIG.THEMES[this.themeIdx]);
+            },
+
+            applyFontClass() {
+                document.body.classList.remove(...CONFIG.FONTS);
+                document.body.classList.add(CONFIG.FONTS[this.fontIdx]);
+            },
+
+            performSearch(term, scope) {
+                if(!term) return;
+                const resultBox = document.getElementById('searchResult');
+                this.saveState(); 
+                
+                if (scope === 'current') {
+                    const doc = this.getActiveDoc();
+                    const idx = doc.content.toLowerCase().indexOf(term.toLowerCase(), this.editor.selectionEnd);
+                    if (idx !== -1) {
+                        this.editor.focus(); this.editor.setSelectionRange(idx, idx + term.length);
+                        resultBox.textContent = `Encontrado!`;
+                    } else {
+                        const idxReset = doc.content.toLowerCase().indexOf(term.toLowerCase());
+                        if (idxReset !== -1) {
+                            this.editor.focus(); this.editor.setSelectionRange(idxReset, idxReset + term.length);
+                            resultBox.textContent = `Busca reiniciada.`;
+                        } else {
+                            resultBox.textContent = `Nenhuma ocorrência.`;
+                        }
+                    }
+                } else {
+                    let found = false;
+                    for(let d of this.documents) {
+                        if(d.content.toLowerCase().includes(term.toLowerCase())) {
+                            this.switchToDoc(d.id);
+                            const idx = d.content.toLowerCase().indexOf(term.toLowerCase());
+                            this.editor.focus(); this.editor.setSelectionRange(idx, idx + term.length);
+                            resultBox.textContent = `Encontrado em "${d.title}".`;
+                            found = true; break;
+                        }
+                    }
+                    if(!found) resultBox.textContent = `Não encontrado em lugar nenhum.`;
+                }
+            },
+
+            updateStats() {
+                const text = this.editor.value;
+                document.getElementById('char-count').textContent = text.length;
+                
+                const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+                document.getElementById('word-count').textContent = words;
+                document.getElementById('reading-time').textContent = Math.ceil(words / CONFIG.WORDS_PM) + ' min';
+                
+                // Contador de Parágrafos
+                const paragraphs = text.split(/\n\s*\n/).filter(b => b.trim().length > 0).length;
+                document.getElementById('paragraph-count').textContent = text.trim() === '' ? 0 : paragraphs || 1;
+                
+                const lines = text.substring(0, this.editor.selectionStart).split('\n');
+                document.getElementById('lineInfo').textContent = lines.length;
+                document.getElementById('colInfo').textContent = lines[lines.length-1].length + 1;
+            },
+
+            bindEvents() {
+                this.editor.addEventListener('input', () => { this.updateStats(); this.saveState(); });
+                this.editor.addEventListener('keyup', () => this.updateStats());
+                this.editor.addEventListener('click', () => this.updateStats());
+
+                const toolbar = document.getElementById('toolbarMenu');
+                document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); toolbar.classList.toggle('active'); });
+                document.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 600 && toolbar.classList.contains('active') && !toolbar.contains(e.target) && e.target.id !== 'btn-menu') {
+                        toolbar.classList.remove('active');
+                    }
+                });
+
+                document.getElementById('btn-save').addEventListener('click', () => this.saveFile());
+                document.getElementById('btn-save-as').addEventListener('click', () => this.saveFileAs());
+                document.getElementById('btn-copy').addEventListener('click', () => { navigator.clipboard.writeText(this.editor.value); UI.showSwipeToast('✓ Copiado'); });
+                
+                // Botão Colar
+                document.getElementById('btn-paste').addEventListener('click', async () => {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        const start = this.editor.selectionStart; const end = this.editor.selectionEnd;
+                        this.editor.setRangeText(text, start, end, 'end');
+                        this.saveState(); this.updateStats(); this.editor.focus();
+                        UI.showSwipeToast('✓ Colado');
+                    } catch (err) {
+                        UI.showSwipeToast('Erro: Permissão para colar bloqueada.');
+                    }
+                });
+
+                document.getElementById('btn-clear').addEventListener('click', () => { if(confirm("Apagar tudo desta aba?")) { this.editor.value = ''; this.saveState(); this.updateStats(); } });
+
+                document.getElementById('btn-open').addEventListener('click', () => document.getElementById('fileInput').click());
+                document.getElementById('fileInput').addEventListener('change', e => {
+                    const file = e.target.files[0]; if(!file) return;
+                    const r = new FileReader();
+                    r.onload = ev => this.addNewTab(file.name, ev.target.result, false);
+                    r.readAsText(file); e.target.value = '';
+                });
+
+                document.getElementById('btn-font').addEventListener('click', () => {
+                    this.fontIdx = (this.fontIdx + 1) % CONFIG.FONTS.length;
+                    this.applyFontClass();
+                    localStorage.setItem(CONFIG.STORAGE_KEY_FONT, CONFIG.FONTS[this.fontIdx]);
+                    UI.showSwipeToast(`Fonte: ${CONFIG.FONT_NAMES[this.fontIdx]}`);
+                });
+                
+                document.getElementById('btn-theme').addEventListener('click', () => {
+                    this.themeIdx = (this.themeIdx + 1) % CONFIG.THEMES.length;
+                    this.applyThemeClass();
+                    localStorage.setItem(CONFIG.STORAGE_KEY_THEME, CONFIG.THEMES[this.themeIdx]);
+                });
+
+                document.getElementById('btn-time').addEventListener('click', () => {
+                    const timeStr = `\n[Registro: ${new Date().toLocaleString()}]\n`;
+                    const start = this.editor.selectionStart;
+                    this.editor.value = this.editor.value.slice(0, start) + timeStr + this.editor.value.slice(this.editor.selectionEnd);
+                    this.editor.selectionStart = this.editor.selectionEnd = start + timeStr.length;
+                    this.editor.focus(); this.saveState(); this.updateStats();
+                });
+
+                // Busca e Fechamento com toque fora
+                const searchModal = document.getElementById('searchModal');
+                const searchInput = document.getElementById('searchInput');
+                
+                document.getElementById('btn-search').addEventListener('click', () => { searchModal.classList.add('show'); searchInput.focus(); });
+                document.getElementById('btn-close-search').addEventListener('click', () => searchModal.classList.remove('show'));
+                
+                // Clicar fora para fechar
+                searchModal.addEventListener('click', (e) => {
+                    if(e.target === searchModal) searchModal.classList.remove('show');
+                });
+
+                document.getElementById('btn-do-search').addEventListener('click', () => {
+                    const scope = document.querySelector('input[name="searchScope"]:checked').value;
+                    this.performSearch(searchInput.value, scope);
+                });
+                searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') document.getElementById('btn-do-search').click(); });
+
+                document.addEventListener('keydown', (e) => {
+                    if (e.ctrlKey && e.key === 's') { e.preventDefault(); this.saveFile(); }
+                    if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); this.saveFileAs(); }
+                    if (e.ctrlKey && e.key === 'o') { e.preventDefault(); document.getElementById('fileInput').click(); }
+                    if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('btn-search').click(); }
+                    if (e.ctrlKey && e.key === 'd') { e.preventDefault(); document.getElementById('btn-time').click(); }
                 });
             }
         };
 
         // ===================================================
-        // MÓDULO: UI (Toasts, Modal, Status)
+        // INTERFACE (Toast Anime Style)
         // ===================================================
         const UI = {
             toastContainer: document.getElementById('toastContainer'),
-            modalContent: document.getElementById('modalContent'),
-            modalTextarea: document.getElementById('modalTextarea'),
-            statusElements: {
-                lineInfo: document.getElementById('lineInfo'),
-                colInfo: document.getElementById('colInfo'),
-                charCount: document.getElementById('char-count'),
-                spaceCount: document.getElementById('space-count'),
-                sentenceCount: document.getElementById('sentence-count'),
-                paragraphCount: document.getElementById('paragraph-count'),
-                readingTime: document.getElementById('reading-time')
-            },
             
-            showToast(message, onUndo) {
+            showSwipeToast(msg, onUndoCallback=null) {
                 const toast = document.createElement('div');
                 toast.className = 'toast';
-                toast.innerHTML = `<span>${message}</span>`;
-                if (onUndo) {
-                    const btn = document.createElement('button');
-                    btn.textContent = 'Desfazer';
-                    btn.addEventListener('click', () => {
-                        onUndo();
-                        toast.classList.remove('show');
-                        setTimeout(() => toast.remove(), 300);
-                    });
+                toast.innerHTML = `<span>${msg}</span>`;
+                if(onUndoCallback) {
+                    const btn = document.createElement('button'); btn.textContent = 'DESFAZER';
+                    btn.onclick = () => { onUndoCallback(); toast.remove(); };
                     toast.appendChild(btn);
                 }
+                
+                let startX = 0, currentX = 0;
+                toast.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive:true});
+                toast.addEventListener('touchmove', e => {
+                    currentX = e.touches[0].clientX - startX;
+                    if(currentX > 0) toast.style.transform = `translateX(${currentX}px) skewX(0deg)`;
+                }, {passive:true});
+                toast.addEventListener('touchend', () => {
+                    if (currentX > 80) { 
+                        toast.style.transition = 'all 0.2s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
+                        toast.classList.add('slashing'); 
+                        setTimeout(() => toast.remove(), 250);
+                    } else {
+                        toast.style.transform = 'translateX(0) skewX(0)'; 
+                    }
+                });
+
                 this.toastContainer.appendChild(toast);
                 requestAnimationFrame(() => toast.classList.add('show'));
-                const duration = onUndo ? 8000 : 3000;
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, duration);
-            },
-            
-            showCopyModal(text) {
-                this.modalTextarea.value = text;
-                this.modalContent.classList.add('show');
-                document.getElementById('btn-copy-modal').focus();
-            },
-            
-            hideModal() {
-                this.modalContent.classList.remove('show');
-            },
-            
-            updateStats() {
-                const text = EditorManager.editor.value;
-                const totalChars = text.length;
-                const spaces = (text.match(/ /g) || []).length;
-                const sentences = Util.countSentences(text);
-                const paragraphs = Util.countParagraphs(text);
-                const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
-                const minutes = Math.ceil(words / CONFIG.WORDS_PER_MINUTE);
-                
-                this.statusElements.charCount.textContent = totalChars;
-                this.statusElements.spaceCount.textContent = spaces;
-                this.statusElements.sentenceCount.textContent = sentences;
-                this.statusElements.paragraphCount.textContent = paragraphs;
-                this.statusElements.readingTime.textContent = minutes === 0 ? '0 min' : (minutes === 1 ? '1 min' : minutes + ' min');
-                
-                const textToCursor = text.substring(0, EditorManager.editor.selectionStart);
-                const lines = textToCursor.split('\n');
-                this.statusElements.lineInfo.textContent = lines.length;
-                this.statusElements.colInfo.textContent = lines[lines.length-1].length + 1;
-            },
-            
-            copyToClipboard(text) {
-                navigator.clipboard.writeText(text).then(() => this.showToast('✓ Copiado'))
-                .catch(() => {
-                    const ta = document.createElement('textarea');
-                    ta.value = text;
-                    ta.style.position = 'fixed'; ta.style.opacity = '0';
-                    document.body.appendChild(ta);
-                    ta.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(ta);
-                    this.showToast('✓ Copiado (fallback)');
-                });
-            }
-        };
-
-        // ===================================================
-        // MÓDULO: Aplicação Principal
-        // ===================================================
-        const App = {
-            themeIndex: 0,
-            fontIndex: 0,
-            closedDoc: null,
-            
-            init() {
-                const { documents, activeDocId } = StorageManager.loadDocs();
-                EditorManager.documents = documents.length ? documents : [this._createDoc('Sem título', '', true)];
-                EditorManager.activeDocId = activeDocId || EditorManager.documents[0].id;
-                EditorManager.documents.forEach(d => EditorManager.initDocHistory(d));
-                
-                const savedTheme = localStorage.getItem(CONFIG.STORAGE_KEY_THEME) || CONFIG.THEMES[0];
-                this.themeIndex = CONFIG.THEMES.indexOf(savedTheme);
-                document.body.classList.add(savedTheme);
-                this._updateThemeIcon();
-                
-                const savedFont = localStorage.getItem(CONFIG.STORAGE_KEY_FONT) || CONFIG.FONTS[0];
-                this.fontIndex = CONFIG.FONTS.indexOf(savedFont);
-                document.body.classList.add(savedFont);
-                
-                TabManager.render(EditorManager.documents, EditorManager.activeDocId, {
-                    onSwitch: (id) => { this.switchTab(id); },
-                    onRename: (id) => { this.renameTab(id); },
-                    onClose: (id) => { this.closeTab(id); },
-                    onNew: () => { this.addNewTab(); }
-                });
-                
-                const activeDoc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                if (activeDoc) {
-                    EditorManager.editor.value = activeDoc.content;
-                    EditorManager.editor.scrollTop = activeDoc.scrollTop || 0;
-                    EditorManager.editor.selectionStart = activeDoc.selectionStart || 0;
-                    EditorManager.editor.selectionEnd = activeDoc.selectionEnd || 0;
-                    if (activeDoc._autoTitle !== false) {
-                        activeDoc.title = Util.getAutoTitle(activeDoc.content);
-                    }
-                }
-                
-                this._bindEvents();
-                UI.updateStats();
-                EditorManager.editor.focus();
-                this._saveAll();
-            },
-            
-            _createDoc(title, content, autoTitle) {
-                return {
-                    id: Date.now().toString(),
-                    title, content,
-                    _autoTitle: autoTitle,
-                    scrollTop: 0,
-                    selectionStart: 0, selectionEnd: 0,
-                    undoStack: [], redoStack: [],
-                    handle: null,
-                    lastFormat: 'txt'
-                };
-            },
-            
-            _saveAll() {
-                const doc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                if (doc) {
-                    doc.content = EditorManager.editor.value;
-                    doc.scrollTop = EditorManager.editor.scrollTop;
-                    doc.selectionStart = EditorManager.editor.selectionStart;
-                    doc.selectionEnd = EditorManager.editor.selectionEnd;
-                    if (doc._autoTitle !== false) {
-                        doc.title = Util.getAutoTitle(EditorManager.editor.value);
-                    }
-                }
-                StorageManager.saveDocs(EditorManager.documents, EditorManager.activeDocId);
-                TabManager.render(EditorManager.documents, EditorManager.activeDocId, {
-                    onSwitch: (id) => { this.switchTab(id); },
-                    onRename: (id) => { this.renameTab(id); },
-                    onClose: (id) => { this.closeTab(id); },
-                    onNew: () => { this.addNewTab(); }
-                });
-            },
-            
-            switchTab(docId) {
-                EditorManager.switchToDoc(docId);
-                UI.updateStats();
-                this._saveAll();
-            },
-            
-            addNewTab(title = null, content = '', autoTitle = true) {
-                const docTitle = title || Util.getAutoTitle(content);
-                const newDoc = this._createDoc(docTitle, content, title ? false : autoTitle);
-                if (title) {
-                    if (title.endsWith('.md')) newDoc.lastFormat = 'md';
-                    else if (title.endsWith('.html') || title.endsWith('.htm')) newDoc.lastFormat = 'html';
-                }
-                EditorManager.documents.push(newDoc);
-                EditorManager.activeDocId = newDoc.id;
-                EditorManager.editor.value = content;
-                EditorManager.editor.scrollTop = 0;
-                EditorManager.editor.selectionStart = 0;
-                EditorManager.editor.selectionEnd = 0;
-                UI.updateStats();
-                this._saveAll();
-                EditorManager.editor.focus();
-            },
-            
-            closeTab(docId) {
-                if (EditorManager.documents.length <= 1) {
-                    const doc = EditorManager.documents[0];
-                    doc.content = ''; doc.title = 'Sem título'; doc._autoTitle = true;
-                    doc.undoStack = []; doc.redoStack = [];
-                    EditorManager.editor.value = '';
-                    UI.updateStats();
-                    this._saveAll();
-                    return;
-                }
-                const idx = EditorManager.documents.findIndex(d => d.id === docId);
-                if (idx === -1) return;
-                this.closedDoc = EditorManager.documents.splice(idx, 1)[0];
-                if (EditorManager.activeDocId === docId) {
-                    const newIdx = Math.min(idx, EditorManager.documents.length - 1);
-                    EditorManager.activeDocId = EditorManager.documents[newIdx].id;
-                    const newDoc = EditorManager.documents[newIdx];
-                    EditorManager.editor.value = newDoc.content;
-                    EditorManager.editor.scrollTop = newDoc.scrollTop || 0;
-                }
-                UI.updateStats();
-                this._saveAll();
-                UI.showToast(`Aba "${this.closedDoc.title}" fechada`, () => {
-                    EditorManager.documents.push(this.closedDoc);
-                    EditorManager.activeDocId = this.closedDoc.id;
-                    EditorManager.editor.value = this.closedDoc.content;
-                    EditorManager.editor.scrollTop = this.closedDoc.scrollTop || 0;
-                    this.closedDoc = null;
-                    UI.updateStats();
-                    this._saveAll();
-                    EditorManager.editor.focus();
-                });
-            },
-            
-            renameTab(docId) {
-                const doc = EditorManager.documents.find(d => d.id === docId);
-                if (!doc) return;
-                const newTitle = prompt('Renomear aba:', doc.title);
-                if (newTitle !== null && newTitle.trim() !== '') {
-                    doc.title = newTitle.trim();
-                    doc._autoTitle = false;
-                    if (doc.title.endsWith('.md')) doc.lastFormat = 'md';
-                    else if (doc.title.endsWith('.html') || doc.title.endsWith('.htm')) doc.lastFormat = 'html';
-                    else if (doc.title.endsWith('.txt')) doc.lastFormat = 'txt';
-                    this._saveAll();
-                }
-            },
-            
-            async saveDefault() {
-                const doc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                if (!doc) return;
-                const format = Util.detectFormat(doc);
-                try {
-                    const success = await FileManager.saveDoc(doc, format);
-                    if (success) {
-                        UI.showToast(`✓ Salvo como .${format}`);
-                    } else {
-                        UI.showCopyModal(EditorManager.editor.value);
-                    }
-                } catch(e) {
-                    UI.showCopyModal(EditorManager.editor.value);
-                }
-                this._saveAll();
-            },
-            
-            async saveAs() {
-                const doc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                if (!doc) return;
-                const currentFormat = Util.detectFormat(doc);
-                const chosen = prompt(`Escolha o formato (txt, md, html):`, currentFormat);
-                if (!chosen) return;
-                const format = chosen.trim().toLowerCase();
-                if (!['txt', 'md', 'html'].includes(format)) {
-                    UI.showToast('Formato inválido. Use: txt, md, html');
-                    return;
-                }
-                try {
-                    const success = await FileManager.saveDoc(doc, format);
-                    if (success) {
-                        UI.showToast(`✓ Salvo como .${format}`);
-                    } else {
-                        UI.showCopyModal(EditorManager.editor.value);
-                    }
-                } catch(e) {
-                    UI.showCopyModal(EditorManager.editor.value);
-                }
-                this._saveAll();
-            },
-            
-            openFile() {
-                FileManager.openFileViaPicker();
-            },
-            
-            pasteFromClipboard() {
-                navigator.clipboard.readText().then(text => {
-                    const start = EditorManager.editor.selectionStart;
-                    const end = EditorManager.editor.selectionEnd;
-                    const val = EditorManager.editor.value;
-                    EditorManager.editor.value = val.substring(0, start) + text + val.substring(end);
-                    EditorManager.editor.selectionStart = EditorManager.editor.selectionEnd = start + text.length;
-                    EditorManager.editor.focus();
-                    EditorManager.forceUndoNow();
-                    UI.updateStats();
-                    this._saveAll();
-                }).catch(() => UI.showToast('Não foi possível colar'));
-            },
-            
-            clearDocument() {
-                const doc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                if (!doc) return;
-                const oldContent = EditorManager.editor.value;
-                EditorManager.clearActiveDoc();
-                UI.updateStats();
-                this._saveAll();
-                UI.showToast('Texto apagado', () => {
-                    EditorManager.editor.value = oldContent;
-                    doc.content = oldContent;
-                    UI.updateStats();
-                    this._saveAll();
-                });
-            },
-            
-            _updateThemeIcon() {
-                const icon = document.getElementById('icon-theme');
-                const currentTheme = CONFIG.THEMES[this.themeIndex];
-                icon.setAttribute('d', CONFIG.THEME_ICONS[currentTheme]);
-            },
-            
-            _bindEvents() {
-                EditorManager.editor.addEventListener('input', () => {
-                    UI.updateStats();
-                    EditorManager.scheduleUndo();
-                    this._saveAll();
-                });
-                EditorManager.editor.addEventListener('paste', () => {
-                    EditorManager.forceUndoNow();
-                });
-                EditorManager.editor.addEventListener('select', UI.updateStats.bind(UI));
-                EditorManager.editor.addEventListener('click', UI.updateStats.bind(UI));
-                EditorManager.editor.addEventListener('keyup', UI.updateStats.bind(UI));
-                EditorManager.editor.addEventListener('scroll', () => {
-                    const doc = EditorManager.documents.find(d => d.id === EditorManager.activeDocId);
-                    if (doc) doc.scrollTop = EditorManager.editor.scrollTop;
-                });
-                
-                // === LÓGICA DO MENU MOBILE ===
-                const btnMenu = document.getElementById('btn-menu');
-                const toolbar = document.getElementById('toolbarMenu');
-                
-                btnMenu.addEventListener('click', () => {
-                    toolbar.classList.toggle('active');
-                });
-
-                // Fecha o menu ao clicar em qualquer botão dentro dele (no mobile)
-                document.querySelectorAll('.toolbar button').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        if (window.innerWidth <= 600) {
-                            toolbar.classList.remove('active');
-                        }
-                    });
-                });
-                
-                // Botões do editor
-                document.getElementById('btn-save').addEventListener('click', () => this.saveDefault());
-                document.getElementById('btn-save-as').addEventListener('click', () => this.saveAs());
-                document.getElementById('btn-copy').addEventListener('click', () => {
-                    if (EditorManager.editor.value) UI.copyToClipboard(EditorManager.editor.value);
-                    else UI.showToast('Nada para copiar');
-                });
-                document.getElementById('btn-open').addEventListener('click', () => this.openFile());
-                document.getElementById('btn-paste').addEventListener('click', () => this.pasteFromClipboard());
-                document.getElementById('btn-clear').addEventListener('click', () => this.clearDocument());
-                document.getElementById('btn-font').addEventListener('click', () => {
-                    this.fontIndex = (this.fontIndex + 1) % CONFIG.FONTS.length;
-                    document.body.classList.remove(...CONFIG.FONTS);
-                    document.body.classList.add(CONFIG.FONTS[this.fontIndex]);
-                    localStorage.setItem(CONFIG.STORAGE_KEY_FONT, CONFIG.FONTS[this.fontIndex]);
-                    const name = CONFIG.FONTS[this.fontIndex].split('-')[1];
-                    UI.showToast(`Fonte: ${name.charAt(0).toUpperCase() + name.slice(1)}`);
-                });
-                document.getElementById('btn-undo').addEventListener('click', () => {
-                    EditorManager.undo();
-                    UI.updateStats();
-                    this._saveAll();
-                });
-                document.getElementById('btn-redo').addEventListener('click', () => {
-                    EditorManager.redo();
-                    UI.updateStats();
-                    this._saveAll();
-                });
-                document.getElementById('btn-theme').addEventListener('click', () => {
-                    this.themeIndex = (this.themeIndex + 1) % CONFIG.THEMES.length;
-                    document.body.classList.remove(...CONFIG.THEMES);
-                    document.body.classList.add(CONFIG.THEMES[this.themeIndex]);
-                    localStorage.setItem(CONFIG.STORAGE_KEY_THEME, CONFIG.THEMES[this.themeIndex]);
-                    this._updateThemeIcon();
-                    UI.showToast(`Tema: ${CONFIG.THEMES[this.themeIndex].split('-')[1]}`);
-                });
-                
-                // File input
-                FileManager.fileInput.addEventListener('change', async (e) => {
-                    const file = e.target.files[0];
-                    if (!file) return;
-                    try {
-                        const { name, content } = await FileManager.readFile(file);
-                        this.addNewTab(name, content, false);
-                        UI.showToast('✓ Arquivo aberto');
-                    } catch(e) {
-                        UI.showToast('Erro ao ler arquivo');
-                    }
-                    FileManager.fileInput.value = '';
-                });
-                
-                // Teclas de atalho
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); EditorManager.undo(); UI.updateStats(); this._saveAll(); }
-                    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); EditorManager.redo(); UI.updateStats(); this._saveAll(); }
-                    if (e.ctrlKey && e.key === 's') { e.preventDefault(); this.saveDefault(); }
-                    if (e.ctrlKey && e.shiftKey && e.key === 'C') { e.preventDefault(); UI.copyToClipboard(EditorManager.editor.value); }
-                    if (e.ctrlKey && e.key === 'o') { e.preventDefault(); this.openFile(); }
-                    if (e.ctrlKey && e.key === 't') { e.preventDefault(); this.addNewTab(); }
-                    if (e.key === 'Delete' && document.activeElement !== EditorManager.editor) {
-                        e.preventDefault();
-                        this.closeTab(EditorManager.activeDocId);
-                    }
-                });
-                
-                // Modal
-                document.getElementById('btn-copy-modal').addEventListener('click', () => {
-                    UI.copyToClipboard(UI.modalTextarea.value);
-                    UI.hideModal();
-                });
-                document.getElementById('btn-close-modal').addEventListener('click', () => UI.hideModal());
-                
-                // Arrastar e soltar arquivos
-                const dropZone = document.getElementById('dropZone');
-                dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
-                dropZone.addEventListener('drop', async (e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    if (file) {
-                        try {
-                            const { name, content } = await FileManager.readFile(file);
-                            this.addNewTab(name, content, false);
-                            UI.showToast('✓ Arquivo aberto');
-                        } catch(ex) {
-                            UI.showToast('Erro ao ler arquivo');
-                        }
-                    }
-                });
+                setTimeout(() => { if(toast.parentNode) { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); } }, 5000);
             }
         };
 
@@ -1053,3 +643,4 @@
     </script>
 </body>
 </html>
+
