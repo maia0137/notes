@@ -56,42 +56,65 @@
         .btn-menu svg { width: 22px; height: 22px; fill: currentColor; }
         .btn-menu:active { background: var(--active); }
 
+        /* Overlay do Menu Mobile */
+        .drawer-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); z-index: 2999;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .drawer-overlay.active { opacity: 1; pointer-events: auto; }
+
         .toolbar { display: flex; align-items: center; padding: 0 6px; height: 34px; gap: 1px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
         .toolbar::-webkit-scrollbar { display: none; }
-        .toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 10px; font-size: 12px; line-height: 1; color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: background 0.15s; white-space: nowrap; flex-shrink: 0; font-family: var(--font-ui); min-height: 26px; }
+        .toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 10px; font-size: 12px; line-height: 1; color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; flex-shrink: 0; font-family: var(--font-ui); min-height: 26px; }
         .toolbar button:hover { background: var(--hover); }
-        .toolbar button:active { background: var(--active); }
+        .toolbar button:active { background: var(--active); transform: scale(0.98); }
         .toolbar button svg { width: 15px; height: 15px; fill: currentColor; }
         .toolbar .separator { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
         
         #btn-install { color: var(--accent); font-weight: bold; border: 1px dashed var(--accent); display: none; }
 
-        /* === ABAS === */
-        .tabs-bar { background: var(--bg-secondary); display: flex; align-items: center; overflow-x: auto; border-bottom: 1px solid var(--border); padding: 2px 4px; gap: 2px; min-height: 36px; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        /* === ABAS COM ANIMAÇÃO === */
+        .tabs-bar { background: var(--bg-secondary); display: flex; align-items: center; overflow-x: auto; border-bottom: 1px solid var(--border); padding: 4px 6px; gap: 4px; min-height: 38px; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
         .tabs-bar::-webkit-scrollbar { display: none; }
         
-        .tab { display: flex; align-items: center; padding: 4px 10px; font-size: 13px; border-radius: 4px; background: transparent; color: var(--text-primary); border: 1px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font-ui); transition: background 0.1s; min-width: 80px; flex-shrink: 0; max-width: 160px; user-select: none; }
-        .tab.active { background: var(--bg-primary); border-color: var(--border); font-weight: 500; border-bottom-color: transparent; margin-bottom: -1px; padding-bottom: 5px; }
+        .tab { display: flex; align-items: center; padding: 6px 12px; font-size: 13px; border-radius: 6px; background: transparent; color: var(--text-primary); border: 1px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font-ui); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); min-width: 80px; flex-shrink: 0; max-width: 160px; user-select: none; }
+        .tab.active { background: var(--bg-primary); border-color: var(--border); font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transform: translateY(-1px); }
         .tab:hover:not(.active) { background: var(--hover); }
         .tab span { overflow: hidden; text-overflow: ellipsis; pointer-events: none; flex-grow: 1; text-align: left;}
         
         .tab-close { margin-left: 5px; font-size: 16px; line-height: 1; opacity: 0.5; cursor: pointer; flex-shrink: 0; background: none; border: none; color: inherit; padding: 4px; border-radius: 50%; }
         .tab-close:hover { opacity: 1; color: #ff4d4d; background: var(--hover); }
-        .tab.drag-over { border: 2px dashed var(--accent); opacity: 0.7; }
+        
+        .tab.drag-over { border: 2px dashed var(--accent); opacity: 0.7; transform: scale(0.95); }
+        .tab.dropped { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
+
         .new-tab-btn { padding: 4px 12px; font-size: 18px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--accent); flex-shrink: 0; line-height: 1; }
 
         /* === EDITOR === */
         .editor-container { overflow: hidden; position: relative; }
-        #editor { width: 100%; height: 100%; padding: 16px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; line-height: 1.6; resize: none; outline: none; border: none; font-family: var(--font-editor); font-weight: 400; transition: font-family 0.3s; }
+        
+        /* Força a seleção a ficar visível mesmo se o foco vacilar sutilmente */
+        #editor::selection { background: var(--accent); color: #ffffff; }
+        
+        /* Animação tática de Flash */
+        @keyframes searchFlash {
+            0% { box-shadow: inset 0 0 0 2px transparent; }
+            15% { box-shadow: inset 0 0 20px var(--accent); background-color: rgba(0, 116, 224, 0.05); }
+            100% { box-shadow: inset 0 0 0 2px transparent; }
+        }
+        .search-flash #editor { animation: searchFlash 0.8s ease-out; }
 
-        /* === STATUS BAR (Estilizada) === */
+        #editor { width: 100%; height: 100%; padding: 16px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; line-height: 1.6; resize: none; outline: none; border: none; font-family: var(--font-editor); font-weight: 400; transition: font-family 0.3s, background-color 0.3s, color 0.3s; z-index: 1; position: relative; }
+
+        /* === STATUS BAR === */
         .status-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4px 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-primary); min-height: 26px; font-family: var(--font-ui); }
         .stat-item { display: flex; align-items: baseline; gap: 4px; }
-        /* Números em destaque */
         .stat-value { color: var(--accent); font-weight: 800; font-family: var(--f-mono); font-size: 12px; background: var(--bg-primary); padding: 0 4px; border-radius: 3px; border: 1px solid var(--border);}
 
         /* === TOAST === */
-        .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 3000; pointer-events: none; overflow: hidden; padding: 10px;}
+        .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 4000; pointer-events: none; overflow: hidden; padding: 10px;}
         .toast {
             background: var(--bg-primary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 13px; display: flex; align-items: center; gap: 8px;
@@ -99,16 +122,14 @@
             pointer-events: auto; border-left: 4px solid var(--accent); position: relative; touch-action: pan-y;
         }
         .toast.show { opacity: 1; transform: translateX(0) skewX(0); }
-        .toast.slashing { transform: translateX(120%) skewX(-20deg) scaleY(0.5); opacity: 0; filter: blur(2px); transition: all 0.25s cubic-bezier(0.55, 0.085, 0.68, 0.53); box-shadow: -10px 0 20px var(--accent); }
+        .toast.slashing { transform: translateX(120%) skewX(-20deg) scaleY(0.5); opacity: 0; transition: all 0.25s cubic-bezier(0.55, 0.085, 0.68, 0.53); box-shadow: -10px 0 20px var(--accent); }
         .toast button { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;}
         .toast button:hover { background: var(--accent); color: #fff; }
 
         /* === MODAL DE BUSCA === */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 2000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 4000; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
         .modal { background: var(--bg-primary); border-radius: 12px; padding: 20px; min-width: 320px; max-width: 90vw; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transform: scale(0.9) translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--text-primary); border: 1px solid var(--border); position: relative; overflow: hidden; }
-        .modal::before { content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 2px; background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: scanline 3s linear infinite; }
-        @keyframes scanline { 0% { left: -100%; } 100% { left: 200%; } }
         .modal-overlay.show .modal { transform: scale(1) translateY(0); }
         .modal h3 { font-size: 16px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
         .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;}
@@ -116,29 +137,50 @@
         .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(0, 116, 224, 0.3); }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 116, 224, 0.4); }
         .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
-        
         .search-input { width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; outline: none; font-family: var(--font-mono); font-size: 14px; margin-bottom: 12px; transition: border-color 0.3s;}
         .search-input:focus { border-color: var(--accent); box-shadow: 0 0 5px rgba(0, 116, 224, 0.3); }
         .radio-group { display: flex; gap: 16px; font-size: 13px; margin-bottom: 12px; }
         .search-result { font-size: 12px; color: var(--accent); min-height: 18px; }
 
-        /* === RESPONSIVIDADE MOBILE === */
+        /* === RESPONSIVIDADE MOBILE (Menu Gaveta Lateral) === */
         @media (max-width: 600px) {
             .btn-menu { display: block; }
-            .toolbar { display: none; position: absolute; top: 100%; left: 0; right: 0; height: auto; background: var(--bg-secondary); flex-direction: column; align-items: stretch; padding: 8px; box-shadow: 0 8px 16px rgba(0,0,0,0.15); border-bottom: 1px solid var(--border); z-index: 100; transform-origin: top; animation: dropdown 0.2s ease-out forwards; }
-            @keyframes dropdown { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
-            .toolbar.active { display: flex; }
-            .toolbar button { justify-content: flex-start; padding: 12px 16px; font-size: 15px; height: auto; border-radius: 4px; }
-            .toolbar button svg { width: 18px; height: 18px; margin-right: 12px; }
-            .toolbar .separator { width: 100%; height: 1px; margin: 4px 0; }
+            .toolbar { 
+                position: fixed; top: 0; right: -100%; height: 100dvh; width: 280px; 
+                background: var(--bg-primary); box-shadow: -5px 0 25px rgba(0,0,0,0.3); 
+                z-index: 3000; padding: 20px 20px 80px 20px; flex-direction: column; gap: 8px;
+                overflow-y: auto; display: flex; align-items: stretch;
+                transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .toolbar.active { right: 0; }
+            .toolbar button { 
+                justify-content: flex-start; padding: 14px 16px; font-size: 15px; 
+                width: 100%; border-radius: 8px; background: var(--bg-secondary); 
+                border: 1px solid var(--border);
+            }
+            .toolbar button svg { width: 20px; height: 20px; margin-right: 12px; }
+            .toolbar .separator { height: 1px; width: 100%; margin: 8px 0; background: var(--border); display: block; }
+            
+            /* Botão de Fechar exclusivo do mobile */
+            .btn-close-drawer { 
+                display: block; align-self: flex-end; background: none; border: none; 
+                font-size: 28px; padding: 4px 12px; cursor: pointer; color: var(--text-primary); 
+                margin-bottom: 16px; border-radius: 50%;
+            }
+            .btn-close-drawer:active { background: var(--active); }
+            
             #editor { padding: 16px; font-size: 16px; }
             .status-bar { font-size: 11px; gap: 8px; padding: 6px 10px; }
-            .tab { padding: 8px 12px; min-width: 90px;}
+            .tab { padding: 10px 14px; min-width: 90px;}
+        }
+        @media (min-width: 601px) {
+            .btn-close-drawer { display: none; }
+            .drawer-overlay { display: none; }
         }
     </style>
 </head>
 <body class="theme-light font-sans-serif">
-    <!-- Header -->
+    
     <div class="header" id="appHeader">
         <div class="title-bar">
             <svg class="app-icon" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
@@ -146,19 +188,31 @@
             <button id="btn-menu" class="btn-menu" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg></button>
         </div>
         
+        <div class="drawer-overlay" id="drawerOverlay"></div>
+
         <div class="toolbar" id="toolbarMenu" role="toolbar">
+            <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Fechar Menu">&times;</button>
+            
             <button id="btn-install" title="Instalar App Offline"><svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2ZM12 17L7 12H10V7H14V12H17Z"/></svg> Instalar App</button>
             <button id="btn-open" title="Abrir arquivo (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H15V9H19M19,6L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V9L19,6Z"/></svg> Abrir</button>
             <button id="btn-save" title="Download Rápido (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M19,9V5L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V10L19,9Z"/></svg> Salvar</button>
             <button id="btn-save-as" title="Escolher Pasta e Formato"><svg viewBox="0 0 24 24"><path d="M13,9V5H11V9H8L12,13L16,9M5,20H19V18H5M5,16H19V14H5M5,12H19V10H5V12Z"/></svg> Salvar Como</button>
+            <button id="btn-share" title="Compartilhar"><svg viewBox="0 0 24 24"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.92 18,21.92C19.61,21.92 20.92,20.61 20.92,19C20.92,17.39 19.61,16.08 18,16.08Z"/></svg> Compartilhar</button>
             <span class="separator"></span>
+            
+            <button id="btn-undo" title="Desfazer"><svg viewBox="0 0 24 24"><path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg> Desfazer</button>
+            <button id="btn-redo" title="Refazer"><svg viewBox="0 0 24 24"><path d="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.96,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z"/></svg> Refazer</button>
+            <span class="separator"></span>
+            
             <button id="btn-paste" title="Colar"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H7V7H17V4H19M9,2A1,1 0 0,1 10,3A1,1 0 0,1 9,4A1,1 0 0,1 8,3A1,1 0 0,1 9,2M15,2A1,1 0 0,1 16,3A1,1 0 0,1 15,4A1,1 0 0,1 14,3A1,1 0 0,1 15,2M12,8A3,3 0 0,0 9,11A3,3 0 0,0 12,14A3,3 0 0,0 15,11A3,3 0 0,0 12,8Z"/></svg> Colar</button>
             <button id="btn-copy" title="Copiar tudo"><svg viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg> Copiar</button>
             <button id="btn-clear" title="Limpar"><svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Limpar</button>
             <span class="separator"></span>
+            
             <button id="btn-search" title="Buscar (Ctrl+F)"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Buscar</button>
             <button id="btn-time" title="Inserir Data/Hora (Ctrl+D)"><svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg> Data/Hora</button>
             <span class="separator"></span>
+            
             <button id="btn-font" title="Alternar fonte"><svg viewBox="0 0 24 24"><path d="M12,3L3,21H6.5L8.5,16H15.5L17.5,21H21L12,3M10,14L12,8.5L14,14H10Z"/></svg> Fonte</button>
             <button id="btn-theme" title="Alternar tema"><svg id="icon-theme" viewBox="0 0 24 24"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/></svg> Tema</button>
         </div>
@@ -181,10 +235,9 @@
     
     <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Modal de Busca -->
     <div class="modal-overlay" id="searchModal">
         <div class="modal">
-            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Modo Rastreador</h3>
+            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Buscar no Texto</h3>
             <input type="text" id="searchInput" class="search-input" placeholder="O que deseja encontrar?">
             <div class="radio-group">
                 <label><input type="radio" name="searchScope" value="current" checked> Aba Atual</label>
@@ -226,7 +279,7 @@
         });
 
         // ===================================================
-        // CONFIGURAÇÕES
+        // CONFIGURAÇÕES & ARMAZENAMENTO
         // ===================================================
         const CONFIG = {
             STORAGE_KEY_DOCS: 'notepad_pro_docs', STORAGE_KEY_ACTIVE: 'notepad_pro_activeId',
@@ -242,7 +295,9 @@
                 const toStore = docs.map(d => ({ 
                     id: d.id, title: d.title, content: d.content, 
                     scrollTop: d.scrollTop, selectionStart: d.selectionStart, 
-                    isAutoTitled: d.isAutoTitled 
+                    isAutoTitled: d.isAutoTitled,
+                    history: d.history, // CORRIGIDO: Preserva o histórico real
+                    historyIdx: d.historyIdx // CORRIGIDO: Preserva a posição do histórico
                 }));
                 try { localStorage.setItem(CONFIG.STORAGE_KEY_DOCS, JSON.stringify(toStore)); localStorage.setItem(CONFIG.STORAGE_KEY_ACTIVE, activeId); } catch(e) {}
             },
@@ -251,8 +306,10 @@
                     const stored = localStorage.getItem(CONFIG.STORAGE_KEY_DOCS);
                     if (stored) {
                         const docs = JSON.parse(stored);
-                        // Garante que o atributo isAutoTitled exista para legados
-                        docs.forEach(d => { if(d.isAutoTitled === undefined) d.isAutoTitled = false; });
+                        docs.forEach(d => { 
+                            if(d.isAutoTitled === undefined) d.isAutoTitled = false;
+                            if(d.history === undefined) { d.history = [d.content || '']; d.historyIdx = 0; }
+                        });
                         const active = localStorage.getItem(CONFIG.STORAGE_KEY_ACTIVE) || docs[0]?.id;
                         return { documents: docs, activeDocId: active };
                     }
@@ -282,20 +339,24 @@
                 this.applyThemeClass();
 
                 this.renderTabs();
-                this.switchToDoc(this.activeDocId);
+                // CORRIGIDO: skipSave = true na inicialização para não sobrescrever o documento salvo com o textarea vazio
+                this.switchToDoc(this.activeDocId, true); 
                 this.bindEvents();
                 this.updateStats();
             },
 
             createDoc(title, content, isAutoTitled = false) {
-                return { id: Date.now().toString() + Math.random().toString(36).substr(2,5), title, content, scrollTop: 0, selectionStart: 0, isAutoTitled };
+                return { 
+                    id: Date.now().toString() + Math.random().toString(36).substr(2,5), 
+                    title, content, scrollTop: 0, selectionStart: 0, isAutoTitled,
+                    history: [content || ''], historyIdx: 0
+                };
             },
 
             saveState() {
                 const doc = this.getActiveDoc();
                 if (doc) {
                     doc.content = this.editor.value; doc.scrollTop = this.editor.scrollTop; doc.selectionStart = this.editor.selectionStart;
-                    // Lógica de nomenclatura automática corrigida
                     if (doc.isAutoTitled) {
                         const lines = doc.content.trim().split('\n');
                         if (lines[0]) {
@@ -307,18 +368,55 @@
                 }
                 StorageManager.saveDocs(this.documents, this.activeDocId);
             },
+            
+            pushHistory() {
+                const doc = this.getActiveDoc();
+                const current = this.editor.value;
+                if (doc.history[doc.historyIdx] === current) return;
+                
+                doc.history = doc.history.slice(0, doc.historyIdx + 1);
+                doc.history.push(current);
+                if (doc.history.length > 50) doc.history.shift(); 
+                else doc.historyIdx++;
+            },
+
+            undo() {
+                const doc = this.getActiveDoc();
+                if (doc && doc.historyIdx > 0) {
+                    doc.historyIdx--;
+                    this.editor.value = doc.history[doc.historyIdx];
+                    this.saveState(); this.updateStats();
+                    UI.showSwipeToast('Desfeito');
+                }
+            },
+
+            redo() {
+                const doc = this.getActiveDoc();
+                if (doc && doc.historyIdx < doc.history.length - 1) {
+                    doc.historyIdx++;
+                    this.editor.value = doc.history[doc.historyIdx];
+                    this.saveState(); this.updateStats();
+                    UI.showSwipeToast('Refeito');
+                }
+            },
 
             getActiveDoc() { return this.documents.find(d => d.id === this.activeDocId); },
 
-            switchToDoc(id) {
-                this.saveState();
+            // CORRIGIDO: Adicionado parâmetro skipSave para evitar sobrescrita indevida
+            switchToDoc(id, skipSave = false) {
+                if (!skipSave && this.activeDocId) {
+                    this.saveState(); // Salva a aba atual APENAS se não for o load inicial e se existir uma aba ativa
+                }
                 this.activeDocId = id;
                 const doc = this.getActiveDoc();
                 if (doc) {
-                    this.editor.value = doc.content; this.editor.scrollTop = doc.scrollTop || 0;
+                    this.editor.value = doc.content; 
+                    this.editor.scrollTop = doc.scrollTop || 0;
                     this.editor.selectionStart = this.editor.selectionEnd = doc.selectionStart || 0;
                 }
-                this.renderTabs(); this.updateStats(); this.editor.focus();
+                this.renderTabs(); 
+                this.updateStats(); 
+                if(!skipSave) this.editor.focus();
             },
 
             addNewTab(title, content='', autoTitle=false) {
@@ -327,25 +425,42 @@
                 this.switchToDoc(doc.id);
             },
 
+            // CORRIGIDO: A lógica de fechar aba não salva acidentalmente a aba fechada por cima da próxima
             closeTab(id) {
                 if (this.documents.length <= 1) {
-                    this.documents[0].content = ''; this.documents[0].title = 'Nova Anotação'; this.documents[0].isAutoTitled = true;
-                    this.switchToDoc(this.documents[0].id);
+                    this.documents[0].content = ''; this.documents[0].title = 'Nova Anotação'; 
+                    this.documents[0].isAutoTitled = true; this.documents[0].history = ['']; this.documents[0].historyIdx = 0;
+                    this.switchToDoc(this.documents[0].id, true);
                     return;
                 }
+                
                 const idx = this.documents.findIndex(d => d.id === id);
                 if (idx === -1) return;
-                const closedDoc = this.documents.splice(idx, 1)[0];
-                if (this.activeDocId === id) this.activeDocId = this.documents[Math.min(idx, this.documents.length - 1)].id;
                 
-                this.switchToDoc(this.activeDocId);
+                const closedDoc = this.documents[idx];
+                const isActiveTabClosing = (this.activeDocId === id);
+                
+                this.documents.splice(idx, 1);
+                
+                if (isActiveTabClosing) {
+                    this.activeDocId = this.documents[Math.min(idx, this.documents.length - 1)].id;
+                    this.switchToDoc(this.activeDocId, true); // Pula o salvamento para não sobrescrever
+                } else {
+                    this.renderTabs();
+                    this.saveState();
+                }
+
                 UI.showSwipeToast(`Aba fechada`, () => {
                     this.documents.splice(idx, 0, closedDoc);
-                    this.switchToDoc(closedDoc.id);
+                    if (isActiveTabClosing) {
+                        this.switchToDoc(closedDoc.id, true);
+                    } else {
+                        this.renderTabs();
+                        this.saveState();
+                    }
                 });
             },
 
-            // Salvar Rápido (Download Direto)
             saveFile() {
                 const doc = this.getActiveDoc(); if(!doc) return;
                 this.saveState();
@@ -360,36 +475,26 @@
                 UI.showSwipeToast('✓ Download rápido concluído');
             },
 
-            // Salvar Como (Com Escolha de Pasta via File System Access API)
             async saveFileAs() {
                 const doc = this.getActiveDoc(); if(!doc) return;
                 this.saveState();
-                
                 let defaultExt = '.md';
                 let filename = doc.title.replace(/[^\w\s-.]/gi, '_');
                 if(!filename.includes('.')) filename += defaultExt;
 
-                // Tenta usar a API moderna (Suportada em Chrome PC/Android recentes)
                 if (window.showSaveFilePicker) {
                     try {
                         const handle = await window.showSaveFilePicker({
                             suggestedName: filename,
-                            types: [
-                                { description: 'Documento Markdown', accept: { 'text/markdown': ['.md'] } },
-                                { description: 'Arquivo de Texto', accept: { 'text/plain': ['.txt'] } }
-                            ]
+                            types: [{ description: 'Documento Markdown', accept: { 'text/markdown': ['.md'] } }, { description: 'Arquivo de Texto', accept: { 'text/plain': ['.txt'] } }]
                         });
                         const writable = await handle.createWritable();
                         await writable.write(doc.content);
                         await writable.close();
                         UI.showSwipeToast('✓ Salvo na pasta escolhida!');
                         return;
-                    } catch(e) {
-                        if (e.name !== 'AbortError') console.error(e);
-                        return; // O usuário cancelou
-                    }
+                    } catch(e) { if (e.name !== 'AbortError') console.error(e); return; }
                 } 
-                // Fallback: Se o navegador não suportar a API de pastas
                 alert("Seu navegador não suporta a escolha de pastas direto do app. O arquivo será enviado para a pasta de Downloads.");
                 this.saveFile(); 
             },
@@ -403,32 +508,23 @@
                 }
             },
 
-            // Renderizar Abas Corrigido (Eventos na DIV principal, não no span)
-            renderTabs() {
+            renderTabs(animatedIndex = -1) {
                 const bar = document.getElementById('tabsBar'); bar.innerHTML = '';
                 this.documents.forEach((doc, index) => {
                     const t = document.createElement('div');
                     t.className = 'tab' + (doc.id === this.activeDocId ? ' active' : '');
+                    if (index === animatedIndex) t.classList.add('dropped'); 
                     t.draggable = true;
                     t.innerHTML = `<span>${doc.title.replace(/</g, "&lt;")}</span><button class="tab-close" title="Fechar aba">&times;</button>`;
                     
-                    // Clique na ABA (Area maior, resolve erro mobile)
                     t.addEventListener('click', (e) => {
-                        if (e.target.closest('.tab-close')) return; // ignorado aqui, tratado abaixo
-                        if (this.activeDocId === doc.id) {
-                            // Clicou na aba que JÁ ESTÁ ativa -> Renomear
-                            this.renameActiveTab(doc);
-                        } else {
-                            this.switchToDoc(doc.id);
-                        }
+                        if (e.target.closest('.tab-close')) return;
+                        if (this.activeDocId === doc.id) this.renameActiveTab(doc);
+                        else this.switchToDoc(doc.id);
                     });
 
-                    // Fechar ABA
-                    t.querySelector('.tab-close').addEventListener('click', (e) => { 
-                        e.stopPropagation(); this.closeTab(doc.id); 
-                    });
+                    t.querySelector('.tab-close').addEventListener('click', (e) => { e.stopPropagation(); this.closeTab(doc.id); });
                     
-                    // Eventos Drag & Drop
                     t.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', index); t.style.opacity = '0.5'; });
                     t.addEventListener('dragend', () => { t.style.opacity = '1'; document.querySelectorAll('.tab').forEach(el=>el.classList.remove('drag-over')); });
                     t.addEventListener('dragover', e => { e.preventDefault(); t.classList.add('drag-over'); });
@@ -439,10 +535,10 @@
                         if(fromIdx !== index) {
                             const moved = this.documents.splice(fromIdx, 1)[0];
                             this.documents.splice(index, 0, moved);
-                            this.renderTabs(); this.saveState();
+                            this.renderTabs(index); 
+                            this.saveState();
                         }
                     });
-
                     bar.appendChild(t);
                 });
                 const addBtn = document.createElement('button'); addBtn.className = 'new-tab-btn'; addBtn.textContent = '+';
@@ -462,19 +558,31 @@
             performSearch(term, scope) {
                 if(!term) return;
                 const resultBox = document.getElementById('searchResult');
+                const searchModal = document.getElementById('searchModal');
                 this.saveState(); 
                 
+                const successFocus = (index) => {
+                    searchModal.classList.remove('show');
+                    this.editor.focus(); 
+                    this.editor.setSelectionRange(index, index + term.length);
+                    
+                    const container = document.getElementById('dropZone');
+                    container.classList.remove('search-flash');
+                    void container.offsetWidth; 
+                    container.classList.add('search-flash');
+                };
+
                 if (scope === 'current') {
                     const doc = this.getActiveDoc();
                     const idx = doc.content.toLowerCase().indexOf(term.toLowerCase(), this.editor.selectionEnd);
                     if (idx !== -1) {
-                        this.editor.focus(); this.editor.setSelectionRange(idx, idx + term.length);
+                        successFocus(idx);
                         resultBox.textContent = `Encontrado!`;
                     } else {
                         const idxReset = doc.content.toLowerCase().indexOf(term.toLowerCase());
                         if (idxReset !== -1) {
-                            this.editor.focus(); this.editor.setSelectionRange(idxReset, idxReset + term.length);
-                            resultBox.textContent = `Busca reiniciada.`;
+                            successFocus(idxReset);
+                            resultBox.textContent = `Busca reiniciada no topo.`;
                         } else {
                             resultBox.textContent = `Nenhuma ocorrência.`;
                         }
@@ -485,7 +593,7 @@
                         if(d.content.toLowerCase().includes(term.toLowerCase())) {
                             this.switchToDoc(d.id);
                             const idx = d.content.toLowerCase().indexOf(term.toLowerCase());
-                            this.editor.focus(); this.editor.setSelectionRange(idx, idx + term.length);
+                            successFocus(idx);
                             resultBox.textContent = `Encontrado em "${d.title}".`;
                             found = true; break;
                         }
@@ -497,51 +605,79 @@
             updateStats() {
                 const text = this.editor.value;
                 document.getElementById('char-count').textContent = text.length;
-                
                 const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
                 document.getElementById('word-count').textContent = words;
                 document.getElementById('reading-time').textContent = Math.ceil(words / CONFIG.WORDS_PM) + ' min';
-                
-                // Contador de Parágrafos
                 const paragraphs = text.split(/\n\s*\n/).filter(b => b.trim().length > 0).length;
                 document.getElementById('paragraph-count').textContent = text.trim() === '' ? 0 : paragraphs || 1;
-                
                 const lines = text.substring(0, this.editor.selectionStart).split('\n');
                 document.getElementById('lineInfo').textContent = lines.length;
                 document.getElementById('colInfo').textContent = lines[lines.length-1].length + 1;
             },
 
             bindEvents() {
-                this.editor.addEventListener('input', () => { this.updateStats(); this.saveState(); });
+                document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.saveState(); });
+                window.addEventListener('pagehide', () => this.saveState());
+                window.addEventListener('beforeunload', () => this.saveState());
+
+                let debounceTimer;
+                this.editor.addEventListener('input', () => { 
+                    this.updateStats(); 
+                    clearTimeout(debounceTimer);
+                    debounceTimer = setTimeout(() => {
+                        this.saveState();
+                        this.pushHistory();
+                    }, 600);
+                });
                 this.editor.addEventListener('keyup', () => this.updateStats());
                 this.editor.addEventListener('click', () => this.updateStats());
 
                 const toolbar = document.getElementById('toolbarMenu');
-                document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); toolbar.classList.toggle('active'); });
-                document.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 600 && toolbar.classList.contains('active') && !toolbar.contains(e.target) && e.target.id !== 'btn-menu') {
-                        toolbar.classList.remove('active');
+                const overlay = document.getElementById('drawerOverlay');
+                const btnCloseDrawer = document.getElementById('btn-close-drawer');
+
+                const toggleDrawer = (force) => {
+                    if (window.innerWidth <= 600) {
+                        const isActive = typeof force === 'boolean' ? force : !toolbar.classList.contains('active');
+                        toolbar.classList.toggle('active', isActive);
+                        overlay.classList.toggle('active', isActive);
                     }
+                };
+
+                document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); toggleDrawer(); });
+                btnCloseDrawer.addEventListener('click', () => toggleDrawer(false));
+                overlay.addEventListener('click', () => toggleDrawer(false));
+                
+                toolbar.querySelectorAll('button:not(#btn-close-drawer)').forEach(btn => {
+                    btn.addEventListener('click', () => toggleDrawer(false));
                 });
 
                 document.getElementById('btn-save').addEventListener('click', () => this.saveFile());
                 document.getElementById('btn-save-as').addEventListener('click', () => this.saveFileAs());
                 document.getElementById('btn-copy').addEventListener('click', () => { navigator.clipboard.writeText(this.editor.value); UI.showSwipeToast('✓ Copiado'); });
                 
-                // Botão Colar
+                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+
+                document.getElementById('btn-share').addEventListener('click', async () => {
+                    const doc = this.getActiveDoc();
+                    if (navigator.share) {
+                        try { await navigator.share({ title: doc.title, text: doc.content }); } 
+                        catch (err) { if (err.name !== 'AbortError') console.error(err); }
+                    } else { UI.showSwipeToast('Compartilhamento nativo não suportado.'); }
+                });
+                
                 document.getElementById('btn-paste').addEventListener('click', async () => {
                     try {
                         const text = await navigator.clipboard.readText();
                         const start = this.editor.selectionStart; const end = this.editor.selectionEnd;
                         this.editor.setRangeText(text, start, end, 'end');
-                        this.saveState(); this.updateStats(); this.editor.focus();
+                        this.saveState(); this.pushHistory(); this.updateStats(); this.editor.focus();
                         UI.showSwipeToast('✓ Colado');
-                    } catch (err) {
-                        UI.showSwipeToast('Erro: Permissão para colar bloqueada.');
-                    }
+                    } catch (err) { UI.showSwipeToast('Erro: Permissão para colar bloqueada.'); }
                 });
 
-                document.getElementById('btn-clear').addEventListener('click', () => { if(confirm("Apagar tudo desta aba?")) { this.editor.value = ''; this.saveState(); this.updateStats(); } });
+                document.getElementById('btn-clear').addEventListener('click', () => { if(confirm("Apagar tudo desta aba?")) { this.editor.value = ''; this.saveState(); this.pushHistory(); this.updateStats(); } });
 
                 document.getElementById('btn-open').addEventListener('click', () => document.getElementById('fileInput').click());
                 document.getElementById('fileInput').addEventListener('change', e => {
@@ -553,15 +689,13 @@
 
                 document.getElementById('btn-font').addEventListener('click', () => {
                     this.fontIdx = (this.fontIdx + 1) % CONFIG.FONTS.length;
-                    this.applyFontClass();
-                    localStorage.setItem(CONFIG.STORAGE_KEY_FONT, CONFIG.FONTS[this.fontIdx]);
+                    this.applyFontClass(); localStorage.setItem(CONFIG.STORAGE_KEY_FONT, CONFIG.FONTS[this.fontIdx]);
                     UI.showSwipeToast(`Fonte: ${CONFIG.FONT_NAMES[this.fontIdx]}`);
                 });
                 
                 document.getElementById('btn-theme').addEventListener('click', () => {
                     this.themeIdx = (this.themeIdx + 1) % CONFIG.THEMES.length;
-                    this.applyThemeClass();
-                    localStorage.setItem(CONFIG.STORAGE_KEY_THEME, CONFIG.THEMES[this.themeIdx]);
+                    this.applyThemeClass(); localStorage.setItem(CONFIG.STORAGE_KEY_THEME, CONFIG.THEMES[this.themeIdx]);
                 });
 
                 document.getElementById('btn-time').addEventListener('click', () => {
@@ -569,20 +703,14 @@
                     const start = this.editor.selectionStart;
                     this.editor.value = this.editor.value.slice(0, start) + timeStr + this.editor.value.slice(this.editor.selectionEnd);
                     this.editor.selectionStart = this.editor.selectionEnd = start + timeStr.length;
-                    this.editor.focus(); this.saveState(); this.updateStats();
+                    this.editor.focus(); this.saveState(); this.pushHistory(); this.updateStats();
                 });
 
-                // Busca e Fechamento com toque fora
                 const searchModal = document.getElementById('searchModal');
                 const searchInput = document.getElementById('searchInput');
-                
                 document.getElementById('btn-search').addEventListener('click', () => { searchModal.classList.add('show'); searchInput.focus(); });
                 document.getElementById('btn-close-search').addEventListener('click', () => searchModal.classList.remove('show'));
-                
-                // Clicar fora para fechar
-                searchModal.addEventListener('click', (e) => {
-                    if(e.target === searchModal) searchModal.classList.remove('show');
-                });
+                searchModal.addEventListener('click', (e) => { if(e.target === searchModal) searchModal.classList.remove('show'); });
 
                 document.getElementById('btn-do-search').addEventListener('click', () => {
                     const scope = document.querySelector('input[name="searchScope"]:checked').value;
@@ -596,12 +724,14 @@
                     if (e.ctrlKey && e.key === 'o') { e.preventDefault(); document.getElementById('fileInput').click(); }
                     if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('btn-search').click(); }
                     if (e.ctrlKey && e.key === 'd') { e.preventDefault(); document.getElementById('btn-time').click(); }
+                    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); this.undo(); }
+                    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); this.redo(); }
                 });
             }
         };
 
         // ===================================================
-        // INTERFACE (Toast Anime Style)
+        // INTERFACE (Toast)
         // ===================================================
         const UI = {
             toastContainer: document.getElementById('toastContainer'),
