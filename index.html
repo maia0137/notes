@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bloco de Notas</title>
+    <title>Bloco de Notas Acadêmico</title>
     <link rel="manifest" id="dynamic-manifest">
     <style>
         /* === RESET E VARIÁVEIS === */
@@ -11,11 +11,11 @@
         
         :root {
             --c-bg-light: #ffffff; --c-text-light: #1f1f1f; --c-border-light: #e5e5e5;
-            --c-accent-light: #0074e0; --c-secondary-light: #f9f9f9; --c-hover-light: #f0f0f0; --c-active-light: #e0e0e0;
-            --c-bg-dark: #1a1a1a; --c-text-dark: #f0f0f0; --c-border-dark: #444444;
-            --c-accent-dark: #60cdff; --c-secondary-dark: #2a2a2a; --c-hover-dark: #3a3a3a; --c-active-dark: #404040;
+            --c-accent-light: #0074e0; --c-secondary-light: #f4f5f7; --c-hover-light: #ebebeb; --c-active-light: #e0e0e0;
+            --c-bg-dark: #1e1e1e; --c-text-dark: #e0e0e0; --c-border-dark: #333333;
+            --c-accent-dark: #60cdff; --c-secondary-dark: #252526; --c-hover-dark: #2d2d2d; --c-active-dark: #404040;
             --c-bg-sepia: #f4f0e8; --c-text-sepia: #4a3b2f; --c-border-sepia: #d0c8b8;
-            --c-accent-sepia: #6e5847; --c-secondary-sepia: #e9e4d9; --c-hover-sepia: #d8d2c6; --c-active-sepia: #c8c0b3;
+            --c-accent-sepia: #6e5847; --c-secondary-sepia: #e5dfd3; --c-hover-sepia: #d8d2c6; --c-active-sepia: #c8c0b3;
             
             --f-sans: 'Segoe UI', 'Roboto', system-ui, sans-serif;
             --f-serif: Georgia, 'Times New Roman', serif;
@@ -26,7 +26,7 @@
             --shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
 
-        html, body { height: 100%; overscroll-behavior-y: none; }
+        html, body { height: 100%; }
         body {
             font-family: var(--font-ui); background: var(--bg-primary); color: var(--text-primary);
             height: 100dvh; display: grid; grid-template-rows: auto auto 1fr auto;
@@ -47,7 +47,7 @@
         body.font-dev        { --font-editor: var(--f-dev); font-variant-ligatures: contextual; }
 
         /* === HEADER E TOOLBAR === */
-        .header { background: var(--bg-secondary); border-bottom: 1px solid var(--border); box-shadow: var(--shadow); z-index: 10; position: relative;}
+        .header { background: var(--bg-secondary); box-shadow: var(--shadow); z-index: 10; position: relative;}
         .title-bar { display: flex; align-items: center; padding: 4px 12px; gap: 6px; min-height: 34px; }
         .app-icon { width: 18px; height: 18px; fill: var(--accent); }
         .app-title { font-size: 13px; font-weight: 500; flex: 1; }
@@ -56,7 +56,6 @@
         .btn-menu svg { width: 22px; height: 22px; fill: currentColor; }
         .btn-menu:active { background: var(--active); }
 
-        /* Overlay do Menu Mobile */
         .drawer-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.5); z-index: 2999;
@@ -64,86 +63,157 @@
         }
         .drawer-overlay.active { opacity: 1; pointer-events: auto; }
 
-        .toolbar { display: flex; align-items: center; padding: 0 6px; height: 34px; gap: 1px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        .toolbar { display: flex; align-items: center; padding: 0 6px; height: 36px; gap: 1px; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
         .toolbar::-webkit-scrollbar { display: none; }
-        .toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 10px; font-size: 12px; line-height: 1; color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; flex-shrink: 0; font-family: var(--font-ui); min-height: 26px; }
+        .toolbar button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 8px; font-size: 12px; line-height: 1; color: var(--text-primary); background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: background 0.15s, transform 0.1s; white-space: nowrap; flex-shrink: 0; font-family: var(--font-ui); min-height: 28px; }
         .toolbar button:hover { background: var(--hover); }
         .toolbar button:active { background: var(--active); transform: scale(0.98); }
         .toolbar button svg { width: 15px; height: 15px; fill: currentColor; }
         .toolbar .separator { width: 1px; height: 18px; background: var(--border); margin: 0 4px; }
         
         #btn-install { color: var(--accent); font-weight: bold; border: 1px dashed var(--accent); display: none; }
+        #btn-clear { color: #d32f2f; }
+        
+        .btn-recording { color: #ff4d4d !important; animation: pulse 1.5s infinite; background: rgba(255, 77, 77, 0.1) !important;}
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* === ABAS COM ANIMAÇÃO === */
-        .tabs-bar { background: var(--bg-secondary); display: flex; align-items: center; overflow-x: auto; border-bottom: 1px solid var(--border); padding: 4px 6px; gap: 4px; min-height: 38px; -webkit-overflow-scrolling: touch; scrollbar-width: none;}
+        /* === FOLDER TAB DESIGN (ABAS DE FICHÁRIO) === */
+        .tabs-bar { 
+            background: var(--bg-secondary); 
+            display: flex; 
+            align-items: flex-end; /* Abas presas à base */
+            overflow-x: auto; 
+            padding: 6px 8px 0 8px; 
+            gap: 2px; 
+            min-height: 38px; 
+            -webkit-overflow-scrolling: touch; 
+            scrollbar-width: none;
+        }
         .tabs-bar::-webkit-scrollbar { display: none; }
         
-        .tab { display: flex; align-items: center; padding: 6px 12px; font-size: 13px; border-radius: 6px; background: transparent; color: var(--text-primary); border: 1px solid transparent; cursor: pointer; white-space: nowrap; font-family: var(--font-ui); transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); min-width: 80px; flex-shrink: 0; max-width: 160px; user-select: none; }
-        .tab.active { background: var(--bg-primary); border-color: var(--border); font-weight: 500; box-shadow: 0 2px 4px rgba(0,0,0,0.05); transform: translateY(-1px); }
-        .tab:hover:not(.active) { background: var(--hover); }
+        .tab { 
+            display: flex; 
+            align-items: center; 
+            padding: 8px 14px; 
+            font-size: 13px; 
+            border-radius: 6px 6px 0 0; /* Cantos arredondados apenas no topo */
+            background: var(--hover); /* Cor rebaixada inativa */
+            color: var(--text-primary); 
+            border: 1px solid var(--border); 
+            border-bottom: none; /* Sem borda inferior */
+            cursor: pointer; 
+            white-space: nowrap; 
+            font-family: var(--font-ui); 
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            min-width: 100px; 
+            flex-shrink: 0; 
+            max-width: 180px; 
+            user-select: none;
+            opacity: 0.8;
+            margin-bottom: 0;
+            position: relative;
+        }
+        
+        .tab.active { 
+            background: var(--bg-primary); 
+            border-color: var(--border); 
+            font-weight: 500; 
+            opacity: 1;
+            padding-bottom: 9px; /* Expande levemente para baixo */
+            margin-bottom: -1px; /* Cobre a borda do editor-container */
+            box-shadow: 0 -2px 5px rgba(0,0,0,0.02); 
+            z-index: 2; 
+        }
+        
+        .tab:hover:not(.active) { opacity: 1; background: var(--border); }
         .tab span { overflow: hidden; text-overflow: ellipsis; pointer-events: none; flex-grow: 1; text-align: left;}
         
-        .tab-close { margin-left: 5px; font-size: 16px; line-height: 1; opacity: 0.5; cursor: pointer; flex-shrink: 0; background: none; border: none; color: inherit; padding: 4px; border-radius: 50%; }
+        .tab-close { margin-left: 8px; font-size: 16px; line-height: 1; opacity: 0.5; cursor: pointer; flex-shrink: 0; background: none; border: none; color: inherit; padding: 2px; border-radius: 50%; transition: 0.2s;}
         .tab-close:hover { opacity: 1; color: #ff4d4d; background: var(--hover); }
         
-        .tab.drag-over { border: 2px dashed var(--accent); opacity: 0.7; transform: scale(0.95); }
+        /* Drag & Drop Visuals */
+        .tab.dragging { opacity: 0.4; }
+        .tab.drag-over-left { border-left: 3px solid var(--accent); }
+        .tab.drag-over-right { border-right: 3px solid var(--accent); }
         .tab.dropped { animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popIn { 0% { transform: scale(0.9); opacity: 0.5; } 100% { transform: scale(1); opacity: 1; } }
-
-        .new-tab-btn { padding: 4px 12px; font-size: 18px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--accent); flex-shrink: 0; line-height: 1; }
-
-        /* === EDITOR === */
-        .editor-container { overflow: hidden; position: relative; }
+        @keyframes popIn { 0% { transform: translateY(5px); opacity: 0.5; } 100% { transform: translateY(0); opacity: 1; } }
         
-        /* Força a seleção a ficar visível mesmo se o foco vacilar sutilmente */
-        #editor::selection { background: var(--accent); color: #ffffff; }
-        
-        /* Animação tática de Flash */
-        @keyframes searchFlash {
-            0% { box-shadow: inset 0 0 0 2px transparent; }
-            15% { box-shadow: inset 0 0 20px var(--accent); background-color: rgba(0, 116, 224, 0.05); }
-            100% { box-shadow: inset 0 0 0 2px transparent; }
-        }
-        .search-flash #editor { animation: searchFlash 0.8s ease-out; }
+        .new-tab-btn { padding: 6px 12px; font-size: 18px; font-weight: bold; background: none; border: none; cursor: pointer; color: var(--accent); flex-shrink: 0; line-height: 1; margin-bottom: 2px; }
 
-        #editor { width: 100%; height: 100%; padding: 16px; background: var(--bg-primary); color: var(--text-primary); font-size: 14px; line-height: 1.6; resize: none; outline: none; border: none; font-family: var(--font-editor); font-weight: 400; transition: font-family 0.3s, background-color 0.3s, color 0.3s; z-index: 1; position: relative; }
+        /* === EDITOR E ÁREA DE TEXTO === */
+/* === EDITOR E ÁREA DE TEXTO AJUSTADA === */
+.editor-container { 
+    overflow-y: auto; 
+    overflow-x: hidden;
+    position: relative; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; /* Centraliza o editor em telas grandes */
+    border-top: 1px solid var(--border); 
+    z-index: 1;
+    background: var(--bg-primary);
+}
+
+#editor { 
+    flex-grow: 1; 
+    width: 100%; 
+    max-width: 900px; /* Limita a largura máxima no PC/Tablet para o texto não esticar demais */
+    padding: 16px; 
+    padding-bottom: 30vh; 
+    background: var(--bg-primary); 
+    color: var(--text-primary); 
+    font-size: 15px; 
+    line-height: 1.6; 
+    resize: none; 
+    outline: none; 
+    border: none; 
+    font-family: var(--font-editor); 
+    font-weight: 400; 
+    transition: font-family 0.3s, background-color 0.3s, color 0.3s; 
+    z-index: 1; 
+    position: relative; 
+}
 
         /* === STATUS BAR === */
         .status-bar { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 4px 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--text-primary); min-height: 26px; font-family: var(--font-ui); }
         .stat-item { display: flex; align-items: baseline; gap: 4px; }
         .stat-value { color: var(--accent); font-weight: 800; font-family: var(--f-mono); font-size: 12px; background: var(--bg-primary); padding: 0 4px; border-radius: 3px; border: 1px solid var(--border);}
 
-        /* === TOAST === */
-        .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 4000; pointer-events: none; overflow: hidden; padding: 10px;}
-        .toast {
-            background: var(--bg-primary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 13px; display: flex; align-items: center; gap: 8px;
-            opacity: 0; transform: translateX(50px) skewX(10deg); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
-            pointer-events: auto; border-left: 4px solid var(--accent); position: relative; touch-action: pan-y;
-        }
+        /* === TOAST & MODALS === */
+        .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 6px; z-index: 5000; pointer-events: none; overflow: hidden; padding: 10px;}
+        .toast { background: var(--bg-primary); color: var(--text-primary); padding: 10px 16px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-size: 13px; display: flex; align-items: center; gap: 8px; opacity: 0; transform: translateX(50px) skewX(10deg); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s; pointer-events: auto; border-left: 4px solid var(--accent); position: relative; touch-action: pan-y; }
         .toast.show { opacity: 1; transform: translateX(0) skewX(0); }
         .toast.slashing { transform: translateX(120%) skewX(-20deg) scaleY(0.5); opacity: 0; transition: all 0.25s cubic-bezier(0.55, 0.085, 0.68, 0.53); box-shadow: -10px 0 20px var(--accent); }
         .toast button { background: transparent; color: var(--accent); border: 1px solid var(--accent); padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;}
         .toast button:hover { background: var(--accent); color: #fff; }
 
-        /* === MODAL DE BUSCA === */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 4000; }
         .modal-overlay.show { opacity: 1; pointer-events: auto; }
-        .modal { background: var(--bg-primary); border-radius: 12px; padding: 20px; min-width: 320px; max-width: 90vw; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transform: scale(0.9) translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--text-primary); border: 1px solid var(--border); position: relative; overflow: hidden; }
+        .modal { background: var(--bg-primary); border-radius: 12px; padding: 20px; width: 90%; max-width: 500px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 10px 40px rgba(0,0,0,0.3); transform: scale(0.9) translateY(20px); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); color: var(--text-primary); border: 1px solid var(--border); position: relative; }
         .modal-overlay.show .modal { transform: scale(1) translateY(0); }
-        .modal h3 { font-size: 16px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px;}
-        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px;}
+        .modal h3 { font-size: 16px; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; flex-shrink: 0;}
+        
+        .modal-content-scroll { overflow-y: auto; flex-grow: 1; padding-right: 4px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px;}
+        .modal-content-scroll::-webkit-scrollbar { width: 6px; }
+        .modal-content-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        .modal-buttons { display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0;}
         .btn { padding: 8px 16px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; font-family: var(--font-ui); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; }
         .btn-primary { background: var(--accent); color: white; box-shadow: 0 2px 8px rgba(0, 116, 224, 0.3); }
         .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0, 116, 224, 0.4); }
         .btn-secondary { background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+        
         .search-input { width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; outline: none; font-family: var(--font-mono); font-size: 14px; margin-bottom: 12px; transition: border-color 0.3s;}
         .search-input:focus { border-color: var(--accent); box-shadow: 0 0 5px rgba(0, 116, 224, 0.3); }
-        .radio-group { display: flex; gap: 16px; font-size: 13px; margin-bottom: 12px; }
-        .search-result { font-size: 12px; color: var(--accent); min-height: 18px; }
+        
+        .template-category { font-size: 12px; font-weight: bold; color: var(--accent); text-transform: uppercase; margin-top: 10px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+        .template-item { text-align: left; background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; color: var(--text-primary); display: flex; flex-direction: column; gap: 4px; }
+        .template-item:hover { border-color: var(--accent); background: var(--hover); transform: translateX(4px); }
+        .template-item strong { font-size: 13px; }
+        .template-item span { font-size: 11px; opacity: 0.7; }
 
-        /* === RESPONSIVIDADE MOBILE (Menu Gaveta Lateral) === */
-        @media (max-width: 600px) {
+        /* === RESPONSIVIDADE === */
+        @media (max-width: 950px) {
             .btn-menu { display: block; }
             .toolbar { 
                 position: fixed; top: 0; right: -100%; height: 100dvh; width: 280px; 
@@ -153,30 +223,13 @@
                 transition: right 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             }
             .toolbar.active { right: 0; }
-            .toolbar button { 
-                justify-content: flex-start; padding: 14px 16px; font-size: 15px; 
-                width: 100%; border-radius: 8px; background: var(--bg-secondary); 
-                border: 1px solid var(--border);
-            }
-            .toolbar button svg { width: 20px; height: 20px; margin-right: 12px; }
-            .toolbar .separator { height: 1px; width: 100%; margin: 8px 0; background: var(--border); display: block; }
+            .toolbar button { justify-content: flex-start; padding: 12px 14px; font-size: 14px; width: 100%; border-radius: 8px; background: var(--bg-secondary); border: 1px solid var(--border); }
+            .toolbar button svg { width: 18px; height: 18px; margin-right: 12px; }
+            .toolbar .separator { height: 1px; width: 100%; margin: 4px 0; background: var(--border); display: block; }
             
-            /* Botão de Fechar exclusivo do mobile */
-            .btn-close-drawer { 
-                display: block; align-self: flex-end; background: none; border: none; 
-                font-size: 28px; padding: 4px 12px; cursor: pointer; color: var(--text-primary); 
-                margin-bottom: 16px; border-radius: 50%;
-            }
-            .btn-close-drawer:active { background: var(--active); }
-            
-            #editor { padding: 16px; font-size: 16px; }
-            .status-bar { font-size: 11px; gap: 8px; padding: 6px 10px; }
-            .tab { padding: 10px 14px; min-width: 90px;}
+            .btn-close-drawer { display: block; align-self: flex-end; background: none; border: none; font-size: 28px; padding: 4px 12px; cursor: pointer; color: var(--text-primary); margin-bottom: 8px; border-radius: 50%; }
         }
-        @media (min-width: 601px) {
-            .btn-close-drawer { display: none; }
-            .drawer-overlay { display: none; }
-        }
+        @media (min-width: 951px) { .btn-close-drawer { display: none; } .drawer-overlay { display: none; } }
     </style>
 </head>
 <body class="theme-light font-sans-serif">
@@ -184,69 +237,105 @@
     <div class="header" id="appHeader">
         <div class="title-bar">
             <svg class="app-icon" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
-            <span class="app-title">Bloco de Notas</span>
+            <span class="app-title">Bloco de Notas Acadêmico</span>
             <button id="btn-menu" class="btn-menu" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg></button>
         </div>
-        
         <div class="drawer-overlay" id="drawerOverlay"></div>
 
         <div class="toolbar" id="toolbarMenu" role="toolbar">
             <button class="btn-close-drawer" id="btn-close-drawer" aria-label="Fechar Menu">&times;</button>
             
             <button id="btn-install" title="Instalar App Offline"><svg viewBox="0 0 24 24"><path d="M12 2A10 10 0 1 0 22 12A10 10 0 0 0 12 2ZM12 17L7 12H10V7H14V12H17Z"/></svg> Instalar App</button>
-            <button id="btn-open" title="Abrir arquivo (Ctrl+O)"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H15V9H19M19,6L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V9L19,6Z"/></svg> Abrir</button>
-            <button id="btn-save" title="Download Rápido (Ctrl+S)"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M19,9V5L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V10L19,9Z"/></svg> Salvar</button>
-            <button id="btn-save-as" title="Escolher Pasta e Formato"><svg viewBox="0 0 24 24"><path d="M13,9V5H11V9H8L12,13L16,9M5,20H19V18H5M5,16H19V14H5M5,12H19V10H5V12Z"/></svg> Salvar Como</button>
-            <button id="btn-share" title="Compartilhar"><svg viewBox="0 0 24 24"><path d="M18,16.08C17.24,16.08 16.56,16.38 16.04,16.85L8.91,12.7C8.96,12.47 9,12.24 9,12C9,11.76 8.96,11.53 8.91,11.3L15.96,7.19C16.5,7.69 17.21,8 18,8A3,3 0 0,0 21,5A3,3 0 0,0 18,2A3,3 0 0,0 15,5C15,5.24 15.04,5.47 15.09,5.7L8.04,9.81C7.5,9.31 6.79,9 6,9A3,3 0 0,0 3,12A3,3 0 0,0 6,15C6.79,15 7.5,14.69 8.04,14.19L15.16,18.34C15.11,18.55 15.08,18.77 15.08,19C15.08,20.61 16.39,21.92 18,21.92C19.61,21.92 20.92,20.61 20.92,19C20.92,17.39 19.61,16.08 18,16.08Z"/></svg> Compartilhar</button>
-            <span class="separator"></span>
+            <button id="btn-open" title="Abrir arquivo"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H15V9H19M19,6L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V9L19,6Z"/></svg> Abrir</button>
+            <button id="btn-save" title="Download"><svg viewBox="0 0 24 24"><path d="M15,9H5V5H15M19,9V5L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V10L19,9Z"/></svg> Salvar</button>
+            <button id="btn-share" title="Compartilhar"><svg viewBox="0 0 24 24"><path d="M18 16.08C17.24 16.08 16.56 16.38 16.04 16.85L8.91 12.7C8.96 12.47 9 12.24 9 12S8.96 11.53 8.91 11.3L15.96 7.19C16.5 7.69 17.21 8 18 8C19.66 8 21 6.66 21 5S19.66 2 18 2 15 3.34 15 5C15 5.24 15.04 5.47 15.09 5.7L8.04 9.81C7.5 9.31 6.79 9 6 9C4.34 9 3 10.34 3 12S4.34 15 6 15C6.79 15 7.5 14.69 8.04 14.19L15.16 18.34C15.11 18.55 15.08 18.77 15.08 19C15.08 20.61 16.39 21.92 18 21.92S20.92 20.61 20.92 19 19.61 16.08 18 16.08Z"/></svg> Enviar</button>
+            <button id="btn-clear" title="Limpar Tudo"><svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Limpar</button>
             
-            <button id="btn-undo" title="Desfazer"><svg viewBox="0 0 24 24"><path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg> Desfazer</button>
-            <button id="btn-redo" title="Refazer"><svg viewBox="0 0 24 24"><path d="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.96,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z"/></svg> Refazer</button>
             <span class="separator"></span>
+            <button id="btn-copy" title="Copiar"><svg viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg> Copiar</button>
+            <button id="btn-paste" title="Colar"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H15V9H19M19,6L14,2H5A2,2 0 0,0 3,4V20A2,2 0 0,0 5,22H19A2,2 0 0,0 21,20V9L19,6M12,19L8,15H10.5V12H13.5V15H16L12,19Z"/></svg> Colar</button>
+            <button id="btn-undo" title="Desfazer"><svg viewBox="0 0 24 24"><path d="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z"/></svg></button>
+            <button id="btn-redo" title="Refazer"><svg viewBox="0 0 24 24"><path d="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.96,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z"/></svg></button>
             
-            <button id="btn-paste" title="Colar"><svg viewBox="0 0 24 24"><path d="M19,20H5V4H7V7H17V4H19M9,2A1,1 0 0,1 10,3A1,1 0 0,1 9,4A1,1 0 0,1 8,3A1,1 0 0,1 9,2M15,2A1,1 0 0,1 16,3A1,1 0 0,1 15,4A1,1 0 0,1 14,3A1,1 0 0,1 15,2M12,8A3,3 0 0,0 9,11A3,3 0 0,0 12,14A3,3 0 0,0 15,11A3,3 0 0,0 12,8Z"/></svg> Colar</button>
-            <button id="btn-copy" title="Copiar tudo"><svg viewBox="0 0 24 24"><path d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"/></svg> Copiar</button>
-            <button id="btn-clear" title="Limpar"><svg viewBox="0 0 24 24"><path d="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z"/></svg> Limpar</button>
             <span class="separator"></span>
+            <button id="btn-voice" title="Ditar por Voz"><svg viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg> Ditado</button>
+            <button id="btn-gps" title="Capturar GPS"><svg viewBox="0 0 24 24"><path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z"/></svg> GPS</button>
+            <button id="btn-time" title="Inserir Data/Hora"><svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg> Data</button>
+            <button id="btn-meta" title="Inserir Metadados"><svg viewBox="0 0 24 24"><path d="M17 3H7C5.9 3 5.01 3.9 5.01 5L5 21L12 18L19 21V5C19 3.9 18.1 3 17 3M17 18L12 15.82L7 18V5H17V18Z"/></svg> Meta</button>
+            <button id="btn-templates" title="Modelos Prontos"><svg viewBox="0 0 24 24"><path d="M14,10H2V12H14V10M14,6H2V8H14V6M2,16H10V14H2V16M21.5,11.5L23,13L16,20L11.5,15.5L13,14L16,17L21.5,11.5Z"/></svg> Modelos</button>
             
-            <button id="btn-search" title="Buscar (Ctrl+F)"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Buscar</button>
-            <button id="btn-time" title="Inserir Data/Hora (Ctrl+D)"><svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg> Data/Hora</button>
             <span class="separator"></span>
-            
-            <button id="btn-font" title="Alternar fonte"><svg viewBox="0 0 24 24"><path d="M12,3L3,21H6.5L8.5,16H15.5L17.5,21H21L12,3M10,14L12,8.5L14,14H10Z"/></svg> Fonte</button>
-            <button id="btn-theme" title="Alternar tema"><svg id="icon-theme" viewBox="0 0 24 24"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/></svg> Tema</button>
+            <button id="btn-search" title="Buscar/Ctrl+F"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3Z"/></svg> Buscar</button>
+            <button id="btn-font" title="Alternar fonte"><svg viewBox="0 0 24 24"><path d="M12,3L3,21H6.5L8.5,16H15.5L17.5,21H21L12,3M10,14L12,8.5L14,14H10Z"/></svg></button>
+            <button id="btn-theme" title="Alternar tema"><svg id="icon-theme" viewBox="0 0 24 24"><path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/></svg></button>
         </div>
     </div>
     
     <div class="tabs-bar" id="tabsBar" role="tablist"></div>
-    <input type="file" id="fileInput" accept=".txt,.md,.html,.text,text/plain,text/markdown,text/html" style="display: none;">
+    <input type="file" id="fileInput" accept=".txt,.md,.html,.text,.log" style="display: none;">
     
     <div class="editor-container" id="dropZone">
-        <textarea id="editor" placeholder="Digite algo ou solte um arquivo aqui..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+        <textarea id="editor" placeholder="Digite, dite ou cole algo aqui..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
     </div>
     
     <div class="status-bar" id="statusBar">
         <span class="stat-item">Ln <span id="lineInfo" class="stat-value">1</span>, Col <span id="colInfo" class="stat-value">1</span></span>
-        <span class="stat-item">Caracteres: <span id="char-count" class="stat-value">0</span></span>
+        <span class="stat-item">Carac: <span id="char-count" class="stat-value">0</span></span>
         <span class="stat-item">Palavras: <span id="word-count" class="stat-value">0</span></span>
-        <span class="stat-item">Parágrafos: <span id="paragraph-count" class="stat-value">0</span></span>
-        <span class="stat-item">Tempo: <span id="reading-time" class="stat-value">0 min</span></span>
+        <span class="stat-item">Parágrafos: <span id="para-count" class="stat-value">0</span></span>
+        <span class="stat-item">Leitura: <span id="reading-time" class="stat-value">0 min</span></span>
+        <span class="stat-item">Zoom: <span id="zoomInfo" class="stat-value">15px</span></span>
     </div>
     
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="modal-overlay" id="searchModal">
         <div class="modal">
-            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/></svg> Buscar no Texto</h3>
+            <h3>
+                <span style="display:flex; align-items:center; gap:8px;">
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16Z"/></svg> Localizar
+                </span>
+                <span id="searchLineInfo" style="font-size: 11px; margin-left: auto; color: var(--accent); font-family: var(--font-mono); font-weight: normal;"></span>
+            </h3>
             <input type="text" id="searchInput" class="search-input" placeholder="O que deseja encontrar?">
-            <div class="radio-group">
-                <label><input type="radio" name="searchScope" value="current" checked> Aba Atual</label>
-                <label><input type="radio" name="searchScope" value="all"> Todas as Abas</label>
-            </div>
-            <div id="searchResult" class="search-result"></div>
             <div class="modal-buttons">
-                <button class="btn btn-secondary" id="btn-close-search">Cancelar</button>
+                <button class="btn btn-secondary" id="btn-close-search">Fechar</button>
                 <button class="btn btn-primary" id="btn-do-search">Buscar Próximo</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="templateModal">
+        <div class="modal">
+            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M14,10H2V12H14V10M14,6H2V8H14V6M2,16H10V14H2V16M21.5,11.5L23,13L16,20L11.5,15.5L13,14L16,17L21.5,11.5Z"/></svg> Biblioteca de Modelos (15)</h3>
+            
+            <div class="modal-content-scroll" id="templateList">
+                <div class="template-category">Relatórios Práticos e de Campo</div>
+                <button class="template-item" data-template="relat_visita"><strong>1. Relatório de Visita Técnica</strong><span>Direto, S-V-O, focado em campo com etapas e interpretação.</span></button>
+                <button class="template-item" data-template="relat_experiencia"><strong>2. Relatório de Experiência Simples</strong><span>Para práticas em aulas teóricas e laboratório (Introdução, Métodos, Resultados).</span></button>
+                <button class="template-item" data-template="relat_tecnico"><strong>3. Relatório Técnico Acadêmico</strong><span>Genérico, com sinopse, metodologia e conclusões formais.</span></button>
+                <button class="template-item" data-template="relat_evento"><strong>4. Relatório de Palestra / Evento</strong><span>Avaliação para simpósios, auditórios e minicursos.</span></button>
+                <button class="template-item" data-template="piramide_invertida"><strong>5. Relatório em Pirâmide Invertida</strong><span>Fato de maior impacto no topo, seguido de evidências secundárias.</span></button>
+
+                <div class="template-category">Produção Científica e Portfólios</div>
+                <button class="template-item" data-template="portfolio"><strong>6. Portfólio de Aula Prática</strong><span>Registro descritivo e reflexivo das aulas no campus.</span></button>
+                <button class="template-item" data-template="relat_cientifico"><strong>7. Relatório de Pesquisa Científica</strong><span>Introdução, métodos reprodutíveis e foco quantitativo.</span></button>
+                <button class="template-item" data-template="plano_pesquisa"><strong>8. Plano de Pesquisa (Projeto/TCC)</strong><span>Estruturação de problema, hipótese, justificativa e roteiro.</span></button>
+
+                <div class="template-category">Análise da Literatura</div>
+                <button class="template-item" data-template="resumo_modular"><strong>9. Resumo Modular (Curinga)</strong><span>Para formatos Informativo, Homotópico, Expandido ou Crítico.</span></button>
+                <button class="template-item" data-template="fichamento"><strong>10. Fichamento Completo</strong><span>Bloco de citação exata, síntese e premissas.</span></button>
+                <button class="template-item" data-template="resenha"><strong>11. Resenha Única (Crítica/Descritiva)</strong><span>Síntese S-V-O seguida de avaliação metodológica ou fechamento.</span></button>
+                <button class="template-item" data-template="levantamento_biblio"><strong>12. Levantamento Bibliográfico (ABNT/APA)</strong><span>Organiza citações parentéticas e observações rápidas para Zotero.</span></button>
+
+                <div class="template-category">Fixação, Botânica e Exatas</div>
+                <button class="template-item" data-template="resumo_fixacao"><strong>13. Resumo Escolar Rápido</strong><span>Ideal para estruturação de conceitos centrais em sala de aula.</span></button>
+                <button class="template-item" data-template="botanica"><strong>14. Ficha Taxonômica Botânica</strong><span>Para identificação de famílias e morfologia de forma imediata.</span></button>
+                <button class="template-item" data-template="snippet"><strong>15. Snippet R/QGIS</strong><span>Caixa de preservação rápida de códigos e expressões espaciais.</span></button>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="btn-close-template">Cancelar</button>
             </div>
         </div>
     </div>
@@ -254,10 +343,31 @@
     <script>
     (function() {
         // ===================================================
+        // SISTEMA DE TEMPLATES MODULAR
+        // ===================================================
+        const MODELS_LIBRARY = {
+            relat_visita: `# RELATÓRIO DE VISITA TÉCNICA\n\n**Instituição/Curso:** Universidade do Estado do Pará - UEPA, Campus Castanhal | Engenharia Florestal  \n**Autor(es):** Evandro Maia Neves  \n**Vínculo Acadêmico:** Disciplina: [Insira o Nome da Disciplina] | Professor: Prof. Dr. Iêdo Souza  \n**Local e Data:** [Ex: Reserva Extrativista Marinha Mãe Grande (Curuçá - PA), DD de Mês de YYYY]  \n\n---\n> 📌 **Diretriz de Escrita:** Relatório focado em dados práticos. Use estrutura frasal direta (Sujeito + Verbo + Objeto). Neutralidade absoluta.\n---\n\n### 1. INTRODUÇÃO\n[Local da visita (município), objetivo geral e contextualização com a disciplina. "A visita técnica foi realizada no local X... com o objetivo geral de..."]\n\n### 2. OBJETIVOS DA ATIVIDADE DE PESQUISA\n* **Etapa 1 (Reconhecimento):** [Verbo no infinitivo]...\n* **Etapa 2 (Mensuração/Amostragem):** [Verbo no infinitivo]...\n* **Etapa 3 (Coleta de Variáveis):** [Verbo no infinitivo]...\n\n### 3. DESCRIÇÃO DO PROCESSO E ASPECTOS OBSERVADOS\n[Detalhe a ordem cronológica e operacional das atividades de campo e métodos de coleta de dados.]\n\n### 4. INTERPRETAÇÃO DOS DADOS\n[Apresente resultados numéricos ou estruturais obtidos e faça a discussão comparando-os com a literatura.]\n\n### 5. COMENTÁRIOS FINAIS\n[Feche o documento atestando se os objetivos foram cumpridos e recomendações técnicas.]\n`,
+            relat_experiencia: `# [INSERIR TÍTULO DA PRÁTICA - Ex: Extração de DNA ou Mensuração Florestal]\n\n**Autor(es):** Evandro Maia Neves\n**Data:** [DD/MM/AAAA]\n**Disciplina:** [Ex: Inventário Florestal, Dendrometria - UEPA]\n\n---\n\n## Introdução\n> **Guia:** O que foi relatado? Por quê (justificativa)? Para quê (objetivos)? Qual a base teórica?\n> **Refinamento Técnico:** Escreva de forma impessoal e direta. O último parágrafo deve declarar o objetivo geral da prática.\n\n[O presente relatório tem como objetivo...]\n\n## Esquema de Investigação / Materiais e Métodos\n> **Guia:** Como foi feito? Detalhe os procedimentos e instrumentos para garantir reprodutibilidade. Estruture em S-V-O.\n\n[Foram utilizados os seguintes equipamentos... O procedimento consistiu em...]\n\n## Resultados e Discussão\n> **Guia:** O que foi encontrado? Discuta os achados frente ao objetivo inicial e à literatura teórica.\n\n[Os dados obtidos demonstraram que... Ao analisar os resultados em face da teoria...]\n\n## Referências\n> **Guia:** Obras consultadas em ordem alfabética.\n\n* SOBRENOME, Nome. *Título da obra*. Local: Editora, Ano.\n`,
+            relat_tecnico: `[TÍTULO DO RELATÓRIO EM MAIÚSCULAS]\n\nAutor: Evandro Maia Neves\nData: [DD/MM/AAAA]\nDestinatário: [Avaliador (Ex: Prof. Dr. Iêdo Souza) / UEPA]\n========================================\n\n[ SINOPSE ]\n[Visão global rápida. Parágrafo único com objetivo, metodologia e principal conclusão.]\n\n[ INTRODUÇÃO ]\n[Problema abordado e o objetivo principal do estudo técnico-científico.]\n\n[ DESENVOLVIMENTO ]\n[Descreva as coordenadas, amostragem e softwares de geoprocessamento / estatística aplicados.]\n\n[ RESULTADOS E DISCUSSÕES ]\n[Exponha os dados quantitativos exatos. Confronte com a literatura oficial sem uso de adjetivos de valor.]\n\n[ CONCLUSÃO ]\n[Responda diretamente aos objetivos propostos e sugira as próximas etapas técnicas.]\n`,
+            relat_evento: `# RELATÓRIO DE PALESTRA / EVENTO\n\n## 1. Identificação\n* **Nome do Aluno:** Evandro Maia Neves\n* **Instituição / Curso:** Engenharia Florestal - UEPA\n* **Tema da Palestra:** [Insira o título exato]\n* **Palestrante(s):** [Nome completo e titulação]\n* **Disciplina / Professor:** [Ex: Prof. Dr. Iêdo Souza]\n* **Data:** [DD/MM/AAAA] | **Local:** [Ex: Auditório Central]\n* **Horário:** [00:00] às [00:00]\n\n---\n\n## 2. Conteúdo Textual\n\n### Introdução\n> **Diretrizes:** Redija de forma estritamente impessoal e objetiva.\n[O presente documento relata as atividades desenvolvidas na palestra técnica...]\n\n### Desenvolvimento\n> **Diretrizes:** Descreva o núcleo técnico do evento. Sintetize as ideias centrais e dados apresentados.\n[A abordagem do tema pautou-se nos seguintes pontos...]\n\n### Conclusão (Avaliação)\n> **Diretrizes:** Apresente uma análise técnica e crítica do evento, pontuando se as metas foram alcançadas.\n[Em suma, constata-se que o evento cumpriu satisfatoriamente o seu papel, visto que...]\n\n---\n## 3. Validação\n**Assinatura do Acadêmico** | **Assinatura do Responsável**\n`,
+            piramide_invertida: `**UNIVERSIDADE DO ESTADO DO PARÁ (UEPA)** *Engenharia Florestal* \n**Orientador:** Prof. Dr. Iêdo Souza  | **Autor:** Evandro Maia Neves\n\n# [MANCHETE DO FATO TÉCNICO OBSERVADO]\n\n> Durante a investigação técnica, [O quê? Fato em estrutura SVO], fato constatado [Quem?], [Quando?], [Onde?]. A verificação ocorreu [Como? Modo de constatação], processo estruturado [Por quê? Causa provável].\n\n## [Subtítulo 1: Evidências Principais]\n[Métricas e dados vitais. Elimine adjetivação ou viés subjetivo.]\n\n## [Subtítulo 2: Fatores de Suporte e Histórico]\n[Dados secundários, comparações com inventários ou parâmetros de literatura.]\n\n### Informações Adicionais\n[Softwares de mapeamento/processamento usados, notas marginais e próximos passos.]\n`,
+            portfolio: `**UNIVERSIDADE DO ESTADO DO PARÁ – CAMPUS CASTANHAL**\n*Engenharia Florestal – 8º Período*\n\n**Disciplina:** [Nome da Disciplina] | **Professor(a):** Prof. Dr. Iêdo Souza\n**Objeto de observação:** [Ex: Coleta e identificação de espécies de mangue]\n**Período/Data:** [Turno - DD/MM/AAAA] | **Graduando:** Evandro Maia Neves\n\n---\n### Tema amplo da aula\n[Assunto principal abordado]\n\n### Tópicos específicos trabalhados\n- [Tópico 1]\n- [Tópico 2]\n\n### Estratégias didáticas\n[Como a aula foi conduzida: campo, software, laboratório?]\n\n### Minhas percepções sobre a aula\n[Como aplicar o conhecimento na Eng. Florestal. Destaque dificuldades e aprendizados com rigor técnico.]\n\n### Material utilizado e produzido\n[Softwares, registros QGIS, fotografias e artigos a inserir no Zotero.]\n`,
+            relat_cientifico: `# RELATÓRIO DE PESQUISA CIENTÍFICA\n\n## 1. IDENTIFICAÇÃO DO TRABALHO E DA AUTORIA\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Insira o título conciso]\n- **Orientador:** Prof. Dr. Iêdo Souza\n- **Área:** Engenharia Florestal\n\n## 2. PARTE TEXTUAL\n> **Critérios Norteadores:** Reprodutibilidade e Forma.\n\n### INTRODUÇÃO (TEMA E PROBLEMA)\n*[Contextualização teórica/prática e delimitação do problema]*\n\n### JUSTIFICATIVA\n*[Demonstre os motivos da pesquisa]*\n\n### OBJETIVOS DO TRABALHO\n**Geral:**\n- [Verbo no infinitivo + Ação central]\n**Específicos:**\n- [Verbo no infinitivo + Etapa]\n\n### METODOLOGIA EXECUTADA\n*[Foco na Reprodutibilidade: universo, instrumentos de coleta (QGIS, R, etc) e amostragem]*\n\n### RESULTADOS E DISCUSSÃO\n*[Apresentação objetiva e discussão à luz da literatura]*\n\n### CONCLUSÕES\n*[Respostas ao problema e contribuições finais]*\n\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT NBR 6023)\n*[Liste no mínimo 3 fontes base. Mantenha padrão ABNT]*\n`,
+            plano_pesquisa: `# PLANO DE PESQUISA\n\n## 1. PARTE PRÉ-TEXTUAL\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Título Provisório]\n- **Orientador:** Prof. Dr. Iêdo Souza\n\n---\n## 2. PARTE TEXTUAL\n\n### TEMA E CONTEXTUALIZAÇÃO\n> **Diretriz:** Assunto principal com breve contextualização S-V-O.\n[Seu texto aqui]\n\n### DELIMITAÇÃO DO TEMA / PROBLEMA\n> **Diretriz:** Apenas UMA frase (interrogativa ou afirmativa) que sintetize o que será investigado.\n[Sua pergunta aqui]\n\n### JUSTIFICATIVA\n> **Diretriz:** Responde "Por quê?". Argumentos em tópicos.\n- **Motivo Acadêmico:** [Seu texto]\n- **Motivo Social/Profissional:** [Seu texto]\n\n### OBJETIVOS\n**Geral:**\n- [Objetivo central]\n**Específicos:**\n- [Etapa 1]\n- [Etapa 2]\n\n### HIPÓTESE\n> **Diretriz:** Parágrafo com provável resposta ao problema.\n[Seu texto aqui]\n\n### REFERENCIAL TEÓRICO\n> **Diretriz:** Apresentação conceitual superficial dos autores base.\n[Seu texto aqui]\n\n### METODOLOGIA\n- **Raciocínio:** [ex: Dedutivo]\n- **Abordagem:** [ex: Quantitativa / Qualitativa]\n- **Universo/Amostra:** [ex: 5 parcelas de 10x10m]\n- **Instrumentos de coleta:** [ex: Fita diamétrica, GPS]\n- **Tratamento de dados:** [ex: Análise estatística R, mapeamento QGIS]\n\n### CRONOGRAMA\n- Levantamento bibliográfico - [Mês/Ano]\n- Pesquisa de campo - [Mês/Ano]\n- Processamento de dados - [Mês/Ano]\n\n---\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT)\n[Insira as referências em formato ABNT]\n`,
+            resumo_modular: `# [Título da Obra ou Relatório]\n\n**Metadados:** Autor: Evandro Maia Neves | Data: [[YYYY-MM-DD]]\n**Referência Base:** [Cole a citação ABNT aqui]\n---\n\n## 1. Eixo Introdutório (Tema, Justificativa e Objetivos)\n[Realidade empírica, problema abordado e objetivos. Uso de S-V-O.]\n\n## 2. Eixo de Desenvolvimento (Escolha A ou B)\n* **[OPÇÃO A] Metodologia:** [Para Relatórios/Pesquisa Prática]\n* **[OPÇÃO B] Síntese da Obra:** [Para Livros e Artigos lidos]\n\n## 3. Eixo de Desfecho (Escolha A ou B)\n* **[OPÇÃO A] Resultados e Conclusão:** [Foco nos dados gerados e resposta à hipótese.]\n* **[OPÇÃO B] Avaliação Crítica:** [Exclusivo para Resenha Crítica. Avalie o método do autor original.]\n\n> 🛠️ CHECKLIST DE EXPORTAÇÃO:\n> - Homotópico/Expandido: Aglutine em 1 parágrafo único.\n> - Informativo/Crítico: Separe os parágrafos.\n> - Descritivo: Converta em Tópicos.\n`,
+            fichamento: `---\ntags: [fichamento, engenharia-florestal, artigo]\ndata_leitura: [YYYY-MM-DD]\n---\n\n# Fichamento: [Tema Geral ou Título Curto]\n**Referência Bibliográfica:** [SOBRENOME, Nome]. **[Título]**. [Cidade]: [Revista], [Ano].\n\n## 1. Síntese de Conteúdo (Resumo)\n[Problema, métodos e resultados principais do autor. Estrutura Sujeito-Verbo-Objeto.]\n\n## 2. Ideia Central do Autor\n[Tese central ou premissa fundamental]\n\n## 3. Citações Chave\n> "[Transcreva literal. Use reticências [...] para supressões.]" (p. XX)\n\n## 4. Comentário Analítico\n[Avaliação técnica rigorosa: o método é válido? Como isso se aplica aos levantamentos em campo?]\n`,
+            resenha: `---\ntags: [resenha, {crítica_ou_descritiva}, engenharia-florestal]\n---\nSOBRENOME, Nome. **Título da Obra**. Cidade: Revista/Editora, Ano.\n\n<center>**RESENHA {CRÍTICA / DESCRITIVA}**</center>\n<div align="right">Evandro Maia Neves¹</div>\n\n### 1. Introdução\nUma análise {crítica / descritiva} é o que se apresenta a seguir, cujo texto-fonte foi "[Obra]", de autoria de [Autor]. Oportunamente, nesta obra, o autor traz à tona o assunto [Assunto] com o objetivo de [Objetivo].\n\n### 2. Desenvolvimento (Síntese)\n[Sintetize métodos, amostragens e resultados. Estritamente factual.]\n\n### 3. Fechamento (Conclusão / Análise)\n[SE DESCRITIVA: Apenas exponha a conclusão do autor. SE CRÍTICA: Avalie a originalidade, falhas e limitações do estudo.]\n\n---\n¹ Acadêmico de Engenharia Florestal (UEPA), Campus Castanhal.\n`,
+            levantamento_biblio: `# RELATÓRIO DE FICHAMENTO BIBLIOGRÁFICO\n\n## 1. Metadados e Dados da Obra\n- **Norma:** [ABNT ou APA]\n- **Tipo:** [Artigo / Livro / Site / Vídeo]\n- **Referência Principal:** [Ex: SOUZA, I.; NEVES, E. M. Título... v.10, p.15. 2026]\n\n## 2. Resultados de Citação\n- **Parentética:** (Souza e Neves, 2026)\n- **Narrativa:** Segundo Souza e Neves (2026)...\n\n## 3. Análise e Notas\n\n### Resumo Objetivo\n> **Diretriz:** Estruture as frases no formato sujeito-verbo-objeto. Isento de interpretações pessoais.\n[Descreva os achados principais do texto aqui]\n\n### Palavras-chave Relacionadas\n- #tag1\n- #tag2\n\n### Citações Diretas Importantes\n1. > "[Cole a citação exata aqui]" (AUTOR, Ano, p. XX)\n\n### Observações para o Projeto\n> **Diretriz:** Aponte a utilidade prática do texto na sua pesquisa/trabalho atual.\n[Insira suas observações técnicas aqui]\n`,
+            resumo_fixacao: `## 📚 Resumo de Estudo: [Assunto]\n**Data:** [DD/MM/AAAA]\n\n### 📌 Ideias Centrais\n* **Tópico Principal:** [Resuma em uma única frase]\n* **Tags:** #engenharia-florestal \n\n### 🔍 Explicação Detalhada\n* **Conceito A:** [Explicação]\n* **Conceito B:** [Explicação]\n\n### ⚠️ Atenção (Pegadinhas)\n> **Cuidado:** [Exceções à regra ou erros metodológicos]\n\n### ❓ Ações\n- [ ] Pesquisar artigo em inglês sobre: \n`,
+            botanica: `### FICHA TAXONÔMICA BOTÂNICA\n**Família:** (ex: Fabaceae, Lecythidaceae)\n**Gênero:** **Espécie:** \n**Nome Vulgar:** \n**Hábito Arbóreo:** \n**Morfologia da Flor:** \n**Presença de Pulvino:** [ ] Sim [ ] Não\n**Local de Coleta:** (ex: Marapanim / Curuçá)\n**Coordenadas GPS:** \n**Observações de Campo:** \n`,
+            snippet: `## 💻 Snippet: [Nome do Script]\n**Linguagem:** R / QGIS\n**Objetivo:** [Ex: Gráfico de dispersão, Mapeamento Espacial]\n\n\`\`\`R\n# Setup pacotes\nlibrary(ggplot2)\n\n# Código / Expressão Lógica\n\`\`\`\n`
+        };
+
+        // ===================================================
         // GERAÇÃO DINÂMICA PWA
         // ===================================================
         const manifest = {
-            name: "Bloco de Notas", short_name: "Notepad", description: "Ferramenta de anotações.",
+            name: "Bloco de Notas Acadêmico", short_name: "Notepad Acad", description: "Anotações e Relatórios.",
             display: "standalone", start_url: location.href, background_color: "#ffffff", theme_color: "#0074e0",
             icons: [{ src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230074e0'%3E%3Cpath d='M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }]
         };
@@ -269,6 +379,7 @@
             e.preventDefault(); deferredPrompt = e;
             document.getElementById('btn-install').style.display = 'inline-flex';
         });
+
         document.getElementById('btn-install').addEventListener('click', async () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
@@ -285,9 +396,7 @@
             STORAGE_KEY_DOCS: 'notepad_pro_docs', STORAGE_KEY_ACTIVE: 'notepad_pro_activeId',
             STORAGE_KEY_THEME: 'notepad_pro_Theme', STORAGE_KEY_FONT: 'notepad_pro_Font',
             THEMES: ['theme-light', 'theme-dark', 'theme-sepia'],
-            FONTS: ['font-sans-serif', 'font-serif', 'font-mono', 'font-writer', 'font-dev'],
-            FONT_NAMES: ['Sans-Serif (Moderna)', 'Serif (Clássica)', 'Monospace (Máquina)', 'Writer (Leitura Livre)', 'Dev (Código)'],
-            WORDS_PM: 200
+            FONTS: ['font-sans-serif', 'font-serif', 'font-mono', 'font-writer', 'font-dev']
         };
 
         const StorageManager = {
@@ -295,9 +404,7 @@
                 const toStore = docs.map(d => ({ 
                     id: d.id, title: d.title, content: d.content, 
                     scrollTop: d.scrollTop, selectionStart: d.selectionStart, 
-                    isAutoTitled: d.isAutoTitled,
-                    history: d.history, // CORRIGIDO: Preserva o histórico real
-                    historyIdx: d.historyIdx // CORRIGIDO: Preserva a posição do histórico
+                    isAutoTitled: d.isAutoTitled, history: d.history, historyIdx: d.historyIdx
                 }));
                 try { localStorage.setItem(CONFIG.STORAGE_KEY_DOCS, JSON.stringify(toStore)); localStorage.setItem(CONFIG.STORAGE_KEY_ACTIVE, activeId); } catch(e) {}
             },
@@ -325,6 +432,10 @@
             documents: [], activeDocId: null, editor: document.getElementById('editor'),
             themeIdx: 0, fontIdx: 0,
             
+            // Variáveis Motor de Voz Silencioso e Zoom
+            recognition: null, isRecording: false, manualStop: false,
+            currentZoom: 15, initialTouchDist: null, initialFontSize: 15,
+            
             init() {
                 const { documents, activeDocId } = StorageManager.loadDocs();
                 this.documents = documents.length ? documents : [this.createDoc('Nova Anotação', '', true)];
@@ -338,8 +449,10 @@
                 this.themeIdx = CONFIG.THEMES.indexOf(savedTheme) > -1 ? CONFIG.THEMES.indexOf(savedTheme) : 0;
                 this.applyThemeClass();
 
+                this.initSpeechRecognition();
+                this.initZoomEvents();
+
                 this.renderTabs();
-                // CORRIGIDO: skipSave = true na inicialização para não sobrescrever o documento salvo com o textarea vazio
                 this.switchToDoc(this.activeDocId, true); 
                 this.bindEvents();
                 this.updateStats();
@@ -359,54 +472,40 @@
                     doc.content = this.editor.value; doc.scrollTop = this.editor.scrollTop; doc.selectionStart = this.editor.selectionStart;
                     if (doc.isAutoTitled) {
                         const lines = doc.content.trim().split('\n');
-                        if (lines[0]) {
-                            doc.title = lines[0].substring(0, 25) + (lines[0].length > 25 ? '...' : '');
-                        } else {
-                            doc.title = 'Nova Anotação';
-                        }
+                        if (lines[0]) doc.title = lines[0].substring(0, 25) + (lines[0].length > 25 ? '...' : '');
+                        else doc.title = 'Nova Anotação';
                     }
                 }
                 StorageManager.saveDocs(this.documents, this.activeDocId);
             },
             
             pushHistory() {
-                const doc = this.getActiveDoc();
-                const current = this.editor.value;
+                const doc = this.getActiveDoc(); const current = this.editor.value;
                 if (doc.history[doc.historyIdx] === current) return;
-                
-                doc.history = doc.history.slice(0, doc.historyIdx + 1);
-                doc.history.push(current);
-                if (doc.history.length > 50) doc.history.shift(); 
-                else doc.historyIdx++;
+                doc.history = doc.history.slice(0, doc.historyIdx + 1); doc.history.push(current);
+                if (doc.history.length > 50) doc.history.shift(); else doc.historyIdx++;
             },
 
             undo() {
                 const doc = this.getActiveDoc();
                 if (doc && doc.historyIdx > 0) {
-                    doc.historyIdx--;
-                    this.editor.value = doc.history[doc.historyIdx];
-                    this.saveState(); this.updateStats();
-                    UI.showSwipeToast('Desfeito');
+                    doc.historyIdx--; this.editor.value = doc.history[doc.historyIdx];
+                    this.saveState(); this.updateStats(); UI.showSwipeToast('Desfeito');
                 }
             },
 
             redo() {
                 const doc = this.getActiveDoc();
                 if (doc && doc.historyIdx < doc.history.length - 1) {
-                    doc.historyIdx++;
-                    this.editor.value = doc.history[doc.historyIdx];
-                    this.saveState(); this.updateStats();
-                    UI.showSwipeToast('Refeito');
+                    doc.historyIdx++; this.editor.value = doc.history[doc.historyIdx];
+                    this.saveState(); this.updateStats(); UI.showSwipeToast('Refeito');
                 }
             },
 
             getActiveDoc() { return this.documents.find(d => d.id === this.activeDocId); },
 
-            // CORRIGIDO: Adicionado parâmetro skipSave para evitar sobrescrita indevida
             switchToDoc(id, skipSave = false) {
-                if (!skipSave && this.activeDocId) {
-                    this.saveState(); // Salva a aba atual APENAS se não for o load inicial e se existir uma aba ativa
-                }
+                if (!skipSave && this.activeDocId) this.saveState();
                 this.activeDocId = id;
                 const doc = this.getActiveDoc();
                 if (doc) {
@@ -414,100 +513,262 @@
                     this.editor.scrollTop = doc.scrollTop || 0;
                     this.editor.selectionStart = this.editor.selectionEnd = doc.selectionStart || 0;
                 }
-                this.renderTabs(); 
-                this.updateStats(); 
+                this.renderTabs(); this.updateStats(); 
                 if(!skipSave) this.editor.focus();
             },
 
             addNewTab(title, content='', autoTitle=false) {
                 const doc = this.createDoc(title || 'Nova Anotação', content, autoTitle);
-                this.documents.push(doc);
-                this.switchToDoc(doc.id);
+                this.documents.push(doc); this.switchToDoc(doc.id);
             },
 
-            // CORRIGIDO: A lógica de fechar aba não salva acidentalmente a aba fechada por cima da próxima
             closeTab(id) {
                 if (this.documents.length <= 1) {
                     this.documents[0].content = ''; this.documents[0].title = 'Nova Anotação'; 
                     this.documents[0].isAutoTitled = true; this.documents[0].history = ['']; this.documents[0].historyIdx = 0;
-                    this.switchToDoc(this.documents[0].id, true);
-                    return;
+                    this.switchToDoc(this.documents[0].id, true); return;
                 }
-                
-                const idx = this.documents.findIndex(d => d.id === id);
-                if (idx === -1) return;
-                
-                const closedDoc = this.documents[idx];
-                const isActiveTabClosing = (this.activeDocId === id);
-                
+                const idx = this.documents.findIndex(d => d.id === id); if (idx === -1) return;
+                const closedDoc = this.documents[idx]; const isActiveTabClosing = (this.activeDocId === id);
                 this.documents.splice(idx, 1);
                 
                 if (isActiveTabClosing) {
                     this.activeDocId = this.documents[Math.min(idx, this.documents.length - 1)].id;
-                    this.switchToDoc(this.activeDocId, true); // Pula o salvamento para não sobrescrever
-                } else {
-                    this.renderTabs();
-                    this.saveState();
-                }
+                    this.switchToDoc(this.activeDocId, true);
+                } else { this.renderTabs(); this.saveState(); }
 
                 UI.showSwipeToast(`Aba fechada`, () => {
                     this.documents.splice(idx, 0, closedDoc);
-                    if (isActiveTabClosing) {
-                        this.switchToDoc(closedDoc.id, true);
-                    } else {
-                        this.renderTabs();
-                        this.saveState();
-                    }
+                    if (isActiveTabClosing) this.switchToDoc(closedDoc.id, true);
+                    else { this.renderTabs(); this.saveState(); }
                 });
             },
 
-            saveFile() {
-                const doc = this.getActiveDoc(); if(!doc) return;
+            insertTextAtCursor(text) {
+                this.editor.focus(); 
+                const start = this.editor.selectionStart;
+                const end = this.editor.selectionEnd;
+                const val = this.editor.value;
+                this.editor.value = val.substring(0, start) + text + val.substring(end);
+                this.editor.selectionStart = this.editor.selectionEnd = start + text.length;
                 this.saveState();
-                let ext = doc.title.includes('.') ? '' : '.txt';
-                let filename = doc.title.replace(/[^\w\s-.]/gi, '_') || 'anotacao';
+                this.pushHistory();
+                this.updateStats();
+            },
+
+            // --- SUPER BUSCA ITERATIVA ---
+            doSearch() {
+                const term = document.getElementById('searchInput').value;
+                if(!term) return;
                 
-                const blob = new Blob([doc.content], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = filename + ext;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                setTimeout(() => URL.revokeObjectURL(url), 1000);
-                UI.showSwipeToast('✓ Download rápido concluído');
-            },
+                const text = this.editor.value.toLowerCase();
+                const searchLower = term.toLowerCase();
+                
+                let startIdx = text.indexOf(searchLower, this.editor.selectionEnd);
+                
+                if(startIdx !== -1) {
+                    this.highlightAndScroll(startIdx, term.length);
+                    return;
+                }
 
-            async saveFileAs() {
-                const doc = this.getActiveDoc(); if(!doc) return;
-                this.saveState();
-                let defaultExt = '.md';
-                let filename = doc.title.replace(/[^\w\s-.]/gi, '_');
-                if(!filename.includes('.')) filename += defaultExt;
+                const currentDocIndex = this.documents.findIndex(d => d.id === this.activeDocId);
+                for (let i = 1; i < this.documents.length; i++) {
+                    const nextIndex = (currentDocIndex + i) % this.documents.length;
+                    const doc = this.documents[nextIndex];
+                    const docText = doc.content.toLowerCase();
+                    const foundIdx = docText.indexOf(searchLower, 0);
 
-                if (window.showSaveFilePicker) {
-                    try {
-                        const handle = await window.showSaveFilePicker({
-                            suggestedName: filename,
-                            types: [{ description: 'Documento Markdown', accept: { 'text/markdown': ['.md'] } }, { description: 'Arquivo de Texto', accept: { 'text/plain': ['.txt'] } }]
-                        });
-                        const writable = await handle.createWritable();
-                        await writable.write(doc.content);
-                        await writable.close();
-                        UI.showSwipeToast('✓ Salvo na pasta escolhida!');
+                    if (foundIdx !== -1) {
+                        this.switchToDoc(doc.id); 
+                        this.highlightAndScroll(foundIdx, term.length);
+                        UI.showSwipeToast(`Palavra encontrada na aba: ${doc.title}`);
                         return;
-                    } catch(e) { if (e.name !== 'AbortError') console.error(e); return; }
-                } 
-                alert("Seu navegador não suporta a escolha de pastas direto do app. O arquivo será enviado para a pasta de Downloads.");
-                this.saveFile(); 
-            },
+                    }
+                }
 
-            renameActiveTab(doc) {
-                const newT = prompt('Renomear aba (ex: campo.md):', doc.title);
-                if(newT && newT.trim() !== '') { 
-                    doc.title = newT.trim(); 
-                    doc.isAutoTitled = false; 
-                    this.renderTabs(); this.saveState(); 
+                startIdx = text.indexOf(searchLower, 0);
+                if(startIdx !== -1) {
+                    this.highlightAndScroll(startIdx, term.length);
+                    UI.showSwipeToast("Fim do documento. Busca reiniciada do topo.");
+                } else {
+                    UI.showSwipeToast("Texto não encontrado em nenhuma aba.");
+                    document.getElementById('searchLineInfo').textContent = "";
                 }
             },
 
+            highlightAndScroll(startIdx, length) {
+                this.editor.focus();
+                this.editor.setSelectionRange(startIdx, startIdx + length);
+                
+                this.editor.parentElement.classList.remove('search-flash');
+                void this.editor.offsetWidth; 
+                this.editor.parentElement.classList.add('search-flash');
+                
+                const linesBefore = this.editor.value.substring(0, startIdx).split('\n');
+                const lineNum = linesBefore.length;
+                document.getElementById('searchLineInfo').textContent = `Localizado na Linha ${lineNum}`;
+
+                const lh = parseInt(window.getComputedStyle(this.editor).lineHeight);
+                this.editor.scrollTop = (lineNum * lh) - (this.editor.clientHeight / 2);
+            },
+
+            // --- INTELIGÊNCIA: GPS FLORESTAL AVANÇADO ---
+            captureGPS() {
+                if (!navigator.geolocation) { UI.showSwipeToast('Seu navegador não suporta GPS.'); return; }
+                UI.showSwipeToast('🛰️ Buscando satélites...');
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        const { latitude, longitude, altitude, accuracy } = pos.coords;
+                        const altStr = altitude ? `${altitude.toFixed(2)}m` : 'N/A';
+                        const mapLink = `https://maps.google.com/?q=${latitude},${longitude}`;
+                        const streetLink = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${latitude},${longitude}`;
+                        const osmLink = `https://www.openstreetmap.org/?mlat=${latitude}&mlon=${longitude}&zoom=18`;
+                        
+                        const gpsText = `\n[📍 REGISTRO ESPACIAL]\nLat: ${latitude.toFixed(6)} | Lng: ${longitude.toFixed(6)}\nAltitude MSL: ${altStr} | Acurácia Estimada: ±${Math.round(accuracy)}m\n- Maps: ${mapLink}\n- StreetView: ${streetLink}\n- OSM: ${osmLink}\n`;
+                        
+                        this.insertTextAtCursor(gpsText);
+                        UI.showSwipeToast('✓ Coordenadas e vínculos inseridos!');
+                    },
+                    (err) => {
+                        let msg = 'Erro de GPS.';
+                        if (err.code === 1) msg = 'Permissão de Localização Negada.';
+                        if (err.code === 2) msg = 'Sinal GPS Indisponível no momento.';
+                        UI.showSwipeToast(msg);
+                    },
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+            },
+
+            // --- ZOOM INTELIGENTE (SCROLL + TECLADO + PINÇA) ---
+            setZoom(newSize) {
+                this.currentZoom = Math.max(10, Math.min(50, newSize));
+                this.editor.style.fontSize = `${this.currentZoom}px`;
+                document.getElementById('zoomInfo').textContent = Math.round(this.currentZoom) + 'px';
+            },
+
+            initZoomEvents() {
+                // Scroll do mouse
+                this.editor.addEventListener('wheel', (e) => {
+                    if (e.ctrlKey || e.metaKey) {
+                        e.preventDefault();
+                        this.setZoom(this.currentZoom - (e.deltaY > 0 ? 1 : -1));
+                    }
+                }, { passive: false });
+
+                // Teclado (Ctrl + +/-/=)
+                document.addEventListener('keydown', (e) => {
+                    if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+' || e.key === '-')) {
+                        e.preventDefault();
+                        this.setZoom(this.currentZoom + (e.key === '-' ? -2 : 2));
+                    }
+                }, { passive: false });
+
+                // Gestos Pinça (Mobile)
+                this.editor.addEventListener('touchstart', (e) => {
+                    if (e.touches.length === 2) {
+                        this.initialTouchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                        this.initialFontSize = this.currentZoom;
+                    }
+                }, { passive: false });
+
+                this.editor.addEventListener('touchmove', (e) => {
+                    if (e.touches.length === 2 && this.initialTouchDist) {
+                        e.preventDefault(); 
+                        const currentDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+                        const scale = currentDist / this.initialTouchDist;
+                        this.setZoom(this.initialFontSize * scale);
+                    }
+                }, { passive: false });
+
+                this.editor.addEventListener('touchend', (e) => {
+                    if (e.touches.length < 2) this.initialTouchDist = null;
+                });
+            },
+
+            // --- NOVO MOTOR DE DITADO (SILENT ECHO & AUTO-RELIGAMENTO) ---
+            initSpeechRecognition() {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) { document.getElementById('btn-voice').style.display = 'none'; return; }
+                
+                this.recognition = new SpeechRecognition();
+                this.recognition.continuous = false; 
+                this.recognition.interimResults = false; 
+                this.recognition.lang = 'pt-BR';
+                this.manualStop = false; 
+
+                this.recognition.onstart = () => {
+                    this.isRecording = true;
+                    document.getElementById('btn-voice').classList.add('btn-recording');
+                };
+
+                this.recognition.onresult = (event) => {
+                    let finalSegment = event.results[0][0].transcript;
+                    let cleanText = finalSegment.trim();
+                    
+                    // Regex robusto para pontuação e quebras de linha/parágrafo
+                    let processed = cleanText
+                        .replace(/\bvírgula\b/gi, ',')
+                        .replace(/\bponto final\b/gi, '.')
+                        .replace(/\bponto e vírgula\b/gi, ';')
+                        .replace(/\bdois pontos\b/gi, ':')
+                        .replace(/\bponto de interroga[çc][ãa]o\b/gi, '?')
+                        .replace(/\bponto de exclama[çc][ãa]o\b/gi, '!')
+                        .replace(/\bnova linha\b/gi, '\n')
+                        .replace(/\bnovo par[áa]grafo\b/gi, '\n\n')
+                        .replace(/\s+([,\.;:?!])/g, '$1'); 
+                    
+                    let prefix = "";
+                    if (this.editor.selectionStart > 0) {
+                        const lastChar = this.editor.value.charAt(this.editor.selectionStart - 1);
+                        if (!/[\s\n]/.test(lastChar) && !/^[\s,\.;:?!\n]/.test(processed)) {
+                            prefix = " ";
+                        }
+                    }
+
+                    const start = this.editor.selectionStart;
+                    this.insertTextAtCursor(prefix + processed);
+                    this.editor.selectionStart = this.editor.selectionEnd = start + prefix.length + processed.length;
+                };
+
+                this.recognition.onerror = (event) => {
+                    if (event.error === 'not-allowed') {
+                        this.manualStop = true;
+                        UI.showSwipeToast('Erro: Microfone bloqueado.');
+                    }
+                };
+
+                this.recognition.onend = () => {
+                    // Auto-Religamento Silencioso: Se não foi parada manual, reconecta
+                    if (!this.manualStop && this.isRecording) {
+                        setTimeout(() => {
+                            try { this.recognition.start(); } catch(e) { }
+                        }, 100);
+                    } else {
+                        document.getElementById('btn-voice').classList.remove('btn-recording');
+                        this.isRecording = false;
+                    }
+                };
+            },
+
+            toggleDictation() {
+                if (!this.recognition) return;
+                
+                if (this.isRecording) { 
+                    this.manualStop = true; 
+                    this.recognition.stop();
+                    document.getElementById('btn-voice').classList.remove('btn-recording');
+                    UI.showSwipeToast('🎙️ Ditado encerrado e salvo.');
+                } 
+                else {
+                    this.manualStop = false;
+                    this.isRecording = true; 
+                    document.getElementById('btn-voice').classList.add('btn-recording');
+                    UI.showSwipeToast('🎙️ Modo Transcrição ATIVO (Longa duração).');
+                    try { this.recognition.start(); } catch(e) { }
+                }
+            },
+
+            // --- RENDERIZAÇÃO DE ABAS FICHÁRIO (FOLDER TAB) E DRAG & DROP ---
             renderTabs(animatedIndex = -1) {
                 const bar = document.getElementById('tabsBar'); bar.innerHTML = '';
                 this.documents.forEach((doc, index) => {
@@ -519,24 +780,54 @@
                     
                     t.addEventListener('click', (e) => {
                         if (e.target.closest('.tab-close')) return;
-                        if (this.activeDocId === doc.id) this.renameActiveTab(doc);
-                        else this.switchToDoc(doc.id);
+                        if (this.activeDocId === doc.id) {
+                            const newT = prompt('Renomear aba:', doc.title);
+                            if(newT && newT.trim() !== '') { doc.title = newT.trim(); doc.isAutoTitled = false; this.renderTabs(); this.saveState(); }
+                        } else this.switchToDoc(doc.id);
                     });
-
                     t.querySelector('.tab-close').addEventListener('click', (e) => { e.stopPropagation(); this.closeTab(doc.id); });
                     
-                    t.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', index); t.style.opacity = '0.5'; });
-                    t.addEventListener('dragend', () => { t.style.opacity = '1'; document.querySelectorAll('.tab').forEach(el=>el.classList.remove('drag-over')); });
-                    t.addEventListener('dragover', e => { e.preventDefault(); t.classList.add('drag-over'); });
-                    t.addEventListener('dragleave', () => t.classList.remove('drag-over'));
+                    // Lógica de Drag and Drop com indicação direcional
+                    t.addEventListener('dragstart', e => { 
+                        e.dataTransfer.setData('text/plain', index); 
+                        t.classList.add('dragging'); 
+                    });
+                    t.addEventListener('dragend', () => { 
+                        t.classList.remove('dragging'); 
+                        document.querySelectorAll('.tab').forEach(el => {
+                            el.classList.remove('drag-over-left', 'drag-over-right');
+                        }); 
+                    });
+                    t.addEventListener('dragover', e => { 
+                        e.preventDefault(); 
+                        const rect = t.getBoundingClientRect();
+                        const mid = rect.left + rect.width / 2;
+                        if (e.clientX < mid) {
+                            t.classList.add('drag-over-left');
+                            t.classList.remove('drag-over-right');
+                        } else {
+                            t.classList.add('drag-over-right');
+                            t.classList.remove('drag-over-left');
+                        }
+                    });
+                    t.addEventListener('dragleave', () => {
+                        t.classList.remove('drag-over-left', 'drag-over-right');
+                    });
                     t.addEventListener('drop', e => {
-                        e.preventDefault(); t.classList.remove('drag-over');
+                        e.preventDefault(); 
+                        t.classList.remove('drag-over-left', 'drag-over-right');
                         const fromIdx = parseInt(e.dataTransfer.getData('text/plain'));
-                        if(fromIdx !== index) {
+                        let toIdx = index;
+                        
+                        // Ajusta índice caso solte na metade direita
+                        const rect = t.getBoundingClientRect();
+                        if (e.clientX > rect.left + rect.width / 2) toIdx++;
+                        if (fromIdx < toIdx) toIdx--; // Compensação por remoção
+                        
+                        if(fromIdx !== toIdx) {
                             const moved = this.documents.splice(fromIdx, 1)[0];
-                            this.documents.splice(index, 0, moved);
-                            this.renderTabs(index); 
-                            this.saveState();
+                            this.documents.splice(toIdx, 0, moved);
+                            this.renderTabs(toIdx); this.saveState();
                         }
                     });
                     bar.appendChild(t);
@@ -545,71 +836,38 @@
                 addBtn.onclick = () => this.addNewTab('Nova Anotação', '', true); bar.appendChild(addBtn);
             },
 
-            applyThemeClass() {
-                document.body.classList.remove(...CONFIG.THEMES);
-                document.body.classList.add(CONFIG.THEMES[this.themeIdx]);
-            },
-
-            applyFontClass() {
-                document.body.classList.remove(...CONFIG.FONTS);
-                document.body.classList.add(CONFIG.FONTS[this.fontIdx]);
-            },
-
-            performSearch(term, scope) {
-                if(!term) return;
-                const resultBox = document.getElementById('searchResult');
-                const searchModal = document.getElementById('searchModal');
-                this.saveState(); 
-                
-                const successFocus = (index) => {
-                    searchModal.classList.remove('show');
-                    this.editor.focus(); 
-                    this.editor.setSelectionRange(index, index + term.length);
-                    
-                    const container = document.getElementById('dropZone');
-                    container.classList.remove('search-flash');
-                    void container.offsetWidth; 
-                    container.classList.add('search-flash');
-                };
-
-                if (scope === 'current') {
-                    const doc = this.getActiveDoc();
-                    const idx = doc.content.toLowerCase().indexOf(term.toLowerCase(), this.editor.selectionEnd);
-                    if (idx !== -1) {
-                        successFocus(idx);
-                        resultBox.textContent = `Encontrado!`;
-                    } else {
-                        const idxReset = doc.content.toLowerCase().indexOf(term.toLowerCase());
-                        if (idxReset !== -1) {
-                            successFocus(idxReset);
-                            resultBox.textContent = `Busca reiniciada no topo.`;
-                        } else {
-                            resultBox.textContent = `Nenhuma ocorrência.`;
-                        }
-                    }
-                } else {
-                    let found = false;
-                    for(let d of this.documents) {
-                        if(d.content.toLowerCase().includes(term.toLowerCase())) {
-                            this.switchToDoc(d.id);
-                            const idx = d.content.toLowerCase().indexOf(term.toLowerCase());
-                            successFocus(idx);
-                            resultBox.textContent = `Encontrado em "${d.title}".`;
-                            found = true; break;
-                        }
-                    }
-                    if(!found) resultBox.textContent = `Não encontrado em lugar nenhum.`;
+            applyThemeClass() { 
+                document.body.classList.remove(...CONFIG.THEMES); 
+                document.body.classList.add(CONFIG.THEMES[this.themeIdx]); 
+                const icon = document.getElementById('icon-theme');
+                if (this.themeIdx === 1) { 
+                    icon.innerHTML = `<path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.11,19.07C15.14,23.04 8.7,23.04 4.73,19.07C0.76,15.1 0.76,8.66 4.73,4.69C5.13,4.3 5.55,3.96 6,3.64C6.75,3.11 7.93,4 7.85,4.83C7.57,7.74 8.35,10.74 10.37,12.76C12.4,14.79 15.4,15.57 18.31,15.3M16.89,17.07C14.73,16.82 12.54,15.93 10.93,14.32C9.32,12.71 8.43,10.5 8.18,8.35C5.83,9.75 4.54,12.46 4.96,15.22C5.37,17.97 7.42,20.06 10.16,20.46C12.91,20.87 15.61,19.56 17.02,17.2C16.97,17.16 16.93,17.12 16.89,17.07Z"/>`;
+                } else if (this.themeIdx === 2) { 
+                    icon.innerHTML = `<path d="M18,22A2,2 0 0,0 20,20V4C20,2.89 19.1,2 18,2H12V9L9.5,7.5L7,9V2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18Z" />`;
+                } else { 
+                    icon.innerHTML = `<path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/>`;
                 }
             },
+            applyFontClass() { document.body.classList.remove(...CONFIG.FONTS); document.body.classList.add(CONFIG.FONTS[this.fontIdx]); },
 
+            // --- ATUALIZAÇÃO DA BARRA DE STATUS (METRICA 225PPM E PARÁGRAFOS) ---
             updateStats() {
                 const text = this.editor.value;
                 document.getElementById('char-count').textContent = text.length;
+                
                 const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
                 document.getElementById('word-count').textContent = words;
-                document.getElementById('reading-time').textContent = Math.ceil(words / CONFIG.WORDS_PM) + ' min';
-                const paragraphs = text.split(/\n\s*\n/).filter(b => b.trim().length > 0).length;
-                document.getElementById('paragraph-count').textContent = text.trim() === '' ? 0 : paragraphs || 1;
+                
+                // Contador de Parágrafos
+                const paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0).length;
+                document.getElementById('para-count').textContent = paragraphs;
+                
+                // Tempo Leitura: 225 palavras por minuto
+                const totalSecs = Math.ceil((words / 225) * 60);
+                const m = Math.floor(totalSecs / 60);
+                const s = totalSecs % 60;
+                document.getElementById('reading-time').textContent = m > 0 ? `${m}m ${s}s` : `${s}s`;
+                
                 const lines = text.substring(0, this.editor.selectionStart).split('\n');
                 document.getElementById('lineInfo').textContent = lines.length;
                 document.getElementById('colInfo').textContent = lines[lines.length-1].length + 1;
@@ -617,135 +875,141 @@
 
             bindEvents() {
                 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') this.saveState(); });
-                window.addEventListener('pagehide', () => this.saveState());
-                window.addEventListener('beforeunload', () => this.saveState());
+                window.addEventListener('pagehide', () => this.saveState()); window.addEventListener('beforeunload', () => this.saveState());
 
                 let debounceTimer;
                 this.editor.addEventListener('input', () => { 
                     this.updateStats(); 
                     clearTimeout(debounceTimer);
-                    debounceTimer = setTimeout(() => {
-                        this.saveState();
-                        this.pushHistory();
-                    }, 600);
+                    debounceTimer = setTimeout(() => { this.saveState(); this.pushHistory(); }, 600);
                 });
                 this.editor.addEventListener('keyup', () => this.updateStats());
                 this.editor.addEventListener('click', () => this.updateStats());
 
                 const toolbar = document.getElementById('toolbarMenu');
                 const overlay = document.getElementById('drawerOverlay');
-                const btnCloseDrawer = document.getElementById('btn-close-drawer');
-
                 const toggleDrawer = (force) => {
-                    if (window.innerWidth <= 600) {
+                    if (window.innerWidth <= 950) {
                         const isActive = typeof force === 'boolean' ? force : !toolbar.classList.contains('active');
-                        toolbar.classList.toggle('active', isActive);
-                        overlay.classList.toggle('active', isActive);
+                        toolbar.classList.toggle('active', isActive); overlay.classList.toggle('active', isActive);
                     }
                 };
 
                 document.getElementById('btn-menu').addEventListener('click', (e) => { e.stopPropagation(); toggleDrawer(); });
-                btnCloseDrawer.addEventListener('click', () => toggleDrawer(false));
+                document.getElementById('btn-close-drawer').addEventListener('click', () => toggleDrawer(false));
                 overlay.addEventListener('click', () => toggleDrawer(false));
                 
                 toolbar.querySelectorAll('button:not(#btn-close-drawer)').forEach(btn => {
-                    btn.addEventListener('click', () => toggleDrawer(false));
+                    if(btn.id !== 'btn-voice') btn.addEventListener('click', () => toggleDrawer(false));
                 });
 
-                document.getElementById('btn-save').addEventListener('click', () => this.saveFile());
-                document.getElementById('btn-save-as').addEventListener('click', () => this.saveFileAs());
-                document.getElementById('btn-copy').addEventListener('click', () => { navigator.clipboard.writeText(this.editor.value); UI.showSwipeToast('✓ Copiado'); });
-                
-                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
-                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
-
-                document.getElementById('btn-share').addEventListener('click', async () => {
-                    const doc = this.getActiveDoc();
-                    if (navigator.share) {
-                        try { await navigator.share({ title: doc.title, text: doc.content }); } 
-                        catch (err) { if (err.name !== 'AbortError') console.error(err); }
-                    } else { UI.showSwipeToast('Compartilhamento nativo não suportado.'); }
+                document.getElementById('btn-save').addEventListener('click', () => {
+                    const doc = this.getActiveDoc(); if(!doc) return;
+                    this.saveState();
+                    const blob = new Blob([doc.content], { type: 'text/plain' });
+                    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
+                    a.download = (doc.title.replace(/[^\w\s-.]/gi, '_') || 'anotacao') + '.md';
+                    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    UI.showSwipeToast('✓ Download rápido concluído');
                 });
                 
-                document.getElementById('btn-paste').addEventListener('click', async () => {
-                    try {
-                        const text = await navigator.clipboard.readText();
-                        const start = this.editor.selectionStart; const end = this.editor.selectionEnd;
-                        this.editor.setRangeText(text, start, end, 'end');
-                        this.saveState(); this.pushHistory(); this.updateStats(); this.editor.focus();
-                        UI.showSwipeToast('✓ Colado');
-                    } catch (err) { UI.showSwipeToast('Erro: Permissão para colar bloqueada.'); }
-                });
-
-                document.getElementById('btn-clear').addEventListener('click', () => { if(confirm("Apagar tudo desta aba?")) { this.editor.value = ''; this.saveState(); this.pushHistory(); this.updateStats(); } });
-
                 document.getElementById('btn-open').addEventListener('click', () => document.getElementById('fileInput').click());
                 document.getElementById('fileInput').addEventListener('change', e => {
                     const file = e.target.files[0]; if(!file) return;
+                    const cleanTitle = file.name.replace(/\.[^/.]+$/, ""); 
                     const r = new FileReader();
-                    r.onload = ev => this.addNewTab(file.name, ev.target.result, false);
+                    r.onload = ev => this.addNewTab(cleanTitle, ev.target.result, false);
                     r.readAsText(file); e.target.value = '';
+                });
+
+                document.getElementById('btn-copy').addEventListener('click', () => {
+                    navigator.clipboard.writeText(this.editor.value).then(() => UI.showSwipeToast('✓ Texto copiado!'));
+                });
+                document.getElementById('btn-paste').addEventListener('click', async () => {
+                    try {
+                        const text = await navigator.clipboard.readText();
+                        this.insertTextAtCursor(text);
+                        UI.showSwipeToast('✓ Texto colado!');
+                    } catch (err) { UI.showSwipeToast('Permissão de colagem negada no navegador.'); }
+                });
+                document.getElementById('btn-share').addEventListener('click', () => {
+                    const doc = this.getActiveDoc();
+                    if (navigator.share) {
+                        navigator.share({ title: doc.title, text: doc.content })
+                            .catch((err) => console.log('Erro ao compartilhar', err));
+                    } else { UI.showSwipeToast('Compartilhamento não suportado.'); }
+                });
+                document.getElementById('btn-clear').addEventListener('click', () => {
+                    if(confirm("Tem certeza que deseja apagar TODO o texto desta aba?")) {
+                        this.editor.value = '';
+                        this.saveState(); this.pushHistory(); this.updateStats();
+                    }
+                });
+                document.getElementById('btn-time').addEventListener('click', () => {
+                    this.insertTextAtCursor(new Date().toLocaleString('pt-BR'));
+                });
+                document.getElementById('btn-meta').addEventListener('click', () => {
+                    const dateStr = new Date().toISOString().split('T')[0];
+                    const title = this.getActiveDoc().title || 'RELATORIO';
+                    this.insertTextAtCursor(`---\ntitle: ${title}\ndata: ${dateStr}\ncategory: Acadêmico\ntags: []\n---\n\n`);
+                });
+
+                document.getElementById('btn-undo').addEventListener('click', () => this.undo());
+                document.getElementById('btn-redo').addEventListener('click', () => this.redo());
+
+                document.getElementById('btn-gps').addEventListener('click', () => this.captureGPS());
+                document.getElementById('btn-voice').addEventListener('click', () => this.toggleDictation());
+                
+                const templateModal = document.getElementById('templateModal');
+                document.getElementById('btn-templates').addEventListener('click', () => templateModal.classList.add('show'));
+                document.getElementById('btn-close-template').addEventListener('click', () => templateModal.classList.remove('show'));
+                templateModal.addEventListener('click', (e) => { if(e.target === templateModal) templateModal.classList.remove('show'); });
+
+                // Integrando os modelos da constante
+                document.querySelectorAll('.template-item').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tplId = btn.getAttribute('data-template');
+                        if(MODELS_LIBRARY[tplId]) {
+                            this.insertTextAtCursor(MODELS_LIBRARY[tplId]);
+                            templateModal.classList.remove('show');
+                            UI.showSwipeToast('✓ Modelo acadêmico inserido com sucesso!');
+                        }
+                    });
                 });
 
                 document.getElementById('btn-font').addEventListener('click', () => {
                     this.fontIdx = (this.fontIdx + 1) % CONFIG.FONTS.length;
                     this.applyFontClass(); localStorage.setItem(CONFIG.STORAGE_KEY_FONT, CONFIG.FONTS[this.fontIdx]);
-                    UI.showSwipeToast(`Fonte: ${CONFIG.FONT_NAMES[this.fontIdx]}`);
                 });
-                
                 document.getElementById('btn-theme').addEventListener('click', () => {
                     this.themeIdx = (this.themeIdx + 1) % CONFIG.THEMES.length;
                     this.applyThemeClass(); localStorage.setItem(CONFIG.STORAGE_KEY_THEME, CONFIG.THEMES[this.themeIdx]);
                 });
 
-                document.getElementById('btn-time').addEventListener('click', () => {
-                    const timeStr = `\n[Registro: ${new Date().toLocaleString()}]\n`;
-                    const start = this.editor.selectionStart;
-                    this.editor.value = this.editor.value.slice(0, start) + timeStr + this.editor.value.slice(this.editor.selectionEnd);
-                    this.editor.selectionStart = this.editor.selectionEnd = start + timeStr.length;
-                    this.editor.focus(); this.saveState(); this.pushHistory(); this.updateStats();
-                });
-
                 const searchModal = document.getElementById('searchModal');
-                const searchInput = document.getElementById('searchInput');
-                document.getElementById('btn-search').addEventListener('click', () => { searchModal.classList.add('show'); searchInput.focus(); });
+                document.getElementById('btn-search').addEventListener('click', () => { 
+                    searchModal.classList.add('show'); 
+                    document.getElementById('searchInput').focus(); 
+                    document.getElementById('searchLineInfo').textContent = "";
+                });
                 document.getElementById('btn-close-search').addEventListener('click', () => searchModal.classList.remove('show'));
-                searchModal.addEventListener('click', (e) => { if(e.target === searchModal) searchModal.classList.remove('show'); });
-
-                document.getElementById('btn-do-search').addEventListener('click', () => {
-                    const scope = document.querySelector('input[name="searchScope"]:checked').value;
-                    this.performSearch(searchInput.value, scope);
-                });
-                searchInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') document.getElementById('btn-do-search').click(); });
-
-                document.addEventListener('keydown', (e) => {
-                    if (e.ctrlKey && e.key === 's') { e.preventDefault(); this.saveFile(); }
-                    if (e.ctrlKey && e.shiftKey && e.key === 'S') { e.preventDefault(); this.saveFileAs(); }
-                    if (e.ctrlKey && e.key === 'o') { e.preventDefault(); document.getElementById('fileInput').click(); }
-                    if (e.ctrlKey && e.key === 'f') { e.preventDefault(); document.getElementById('btn-search').click(); }
-                    if (e.ctrlKey && e.key === 'd') { e.preventDefault(); document.getElementById('btn-time').click(); }
-                    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); this.undo(); }
-                    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); this.redo(); }
-                });
+                document.getElementById('btn-do-search').addEventListener('click', () => this.doSearch());
+                document.getElementById('searchInput').addEventListener('keyup', (e) => { if(e.key === 'Enter') this.doSearch(); });
             }
         };
 
         // ===================================================
-        // INTERFACE (Toast)
+        // INTERFACE (Toast Animado)
         // ===================================================
         const UI = {
             toastContainer: document.getElementById('toastContainer'),
-            
             showSwipeToast(msg, onUndoCallback=null) {
                 const toast = document.createElement('div');
-                toast.className = 'toast';
-                toast.innerHTML = `<span>${msg}</span>`;
+                toast.className = 'toast'; toast.innerHTML = `<span>${msg}</span>`;
                 if(onUndoCallback) {
                     const btn = document.createElement('button'); btn.textContent = 'DESFAZER';
-                    btn.onclick = () => { onUndoCallback(); toast.remove(); };
-                    toast.appendChild(btn);
+                    btn.onclick = () => { onUndoCallback(); toast.remove(); }; toast.appendChild(btn);
                 }
-                
                 let startX = 0, currentX = 0;
                 toast.addEventListener('touchstart', e => startX = e.touches[0].clientX, {passive:true});
                 toast.addEventListener('touchmove', e => {
@@ -753,18 +1017,12 @@
                     if(currentX > 0) toast.style.transform = `translateX(${currentX}px) skewX(0deg)`;
                 }, {passive:true});
                 toast.addEventListener('touchend', () => {
-                    if (currentX > 80) { 
-                        toast.style.transition = 'all 0.2s cubic-bezier(0.55, 0.085, 0.68, 0.53)';
-                        toast.classList.add('slashing'); 
-                        setTimeout(() => toast.remove(), 250);
-                    } else {
-                        toast.style.transform = 'translateX(0) skewX(0)'; 
-                    }
+                    if (currentX > 80) { toast.style.transition = 'all 0.2s'; toast.classList.add('slashing'); setTimeout(() => toast.remove(), 250); } 
+                    else { toast.style.transform = 'translateX(0) skewX(0)'; }
                 });
-
                 this.toastContainer.appendChild(toast);
                 requestAnimationFrame(() => toast.classList.add('show'));
-                setTimeout(() => { if(toast.parentNode) { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); } }, 5000);
+                setTimeout(() => { if(toast.parentNode) { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); } }, 4500);
             }
         };
 
@@ -773,4 +1031,3 @@
     </script>
 </body>
 </html>
-
