@@ -3,8 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Bloco de Notas Acadêmico</title>
+    <title>MN Field Notebook</title>
     <link rel="manifest" id="dynamic-manifest">
+    <script>
+        // === ANTI-CLARÃO (FOUC GUARD) ===
+        // Roda ANTES do CSS pintar a tela: lê o tema salvo e aplica a cor de
+        // fundo direto no <html>, evitando o "flash branco" ao abrir o app
+        // com tema escuro/sépia já escolhido anteriormente.
+        (function() {
+            try {
+                var theme = localStorage.getItem('notepad_pro_Theme') || 'theme-light';
+                var bg = theme === 'theme-dark' ? '#1e1e1e' : (theme === 'theme-sepia' ? '#f4f0e8' : '#ffffff');
+                document.documentElement.style.background = bg;
+                document.documentElement.style.colorScheme = theme === 'theme-dark' ? 'dark' : 'light';
+            } catch(e) {}
+        })();
+    </script>
     <style>
         /* === RESET E VARIÁVEIS === */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -75,6 +89,7 @@
         #btn-clear { color: #d32f2f; }
         
         .btn-recording { color: #ff4d4d !important; animation: pulse 1.5s infinite; background: rgba(255, 77, 77, 0.1) !important;}
+        .btn-discreet-active { color: #7c5cff !important; animation: pulse 1.5s infinite; background: rgba(124, 92, 255, 0.12) !important;}
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         /* === FOLDER TAB DESIGN (ABAS DE FICHÁRIO) === */
@@ -154,10 +169,50 @@
     background: var(--bg-primary);
 }
 
+.editor-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    width: 100%;
+    max-width: 900px; /* Mesmo limite do editor original, agora aplicado à moldura */
+    flex-grow: 1;
+}
+
+/* === RÉGUA DE NUMERAÇÃO DE LINHAS === */
+.line-numbers {
+    flex-shrink: 0;
+    width: 38px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border);
+    user-select: none;
+    -webkit-user-select: none;
+    z-index: 1;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.line-numbers-inner {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    will-change: transform;
+}
+
+.line-num {
+    position: absolute;
+    right: 8px;
+    font-family: var(--f-mono);
+    font-size: 11px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    opacity: 0.35;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
 #editor { 
     flex-grow: 1; 
     width: 100%; 
-    max-width: 900px; /* Limita a largura máxima no PC/Tablet para o texto não esticar demais */
     padding: 16px; 
     padding-bottom: 30vh; 
     background: var(--bg-primary); 
@@ -205,6 +260,24 @@
         
         .search-input { width: 100%; padding: 10px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); border-radius: 6px; outline: none; font-family: var(--font-mono); font-size: 14px; margin-bottom: 12px; transition: border-color 0.3s;}
         .search-input:focus { border-color: var(--accent); box-shadow: 0 0 5px rgba(0, 116, 224, 0.3); }
+
+        /* === REALCE DE BUSCA (mais visível e mais duradouro) === */
+        /* Pulso ao redor do editor sempre que um termo é encontrado/navegado.
+           Duração alongada (2.6s, com 2 pulsos) para dar tempo de o olho localizar o trecho. */
+        @keyframes searchPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(255, 199, 0, 0); }
+            8%   { box-shadow: 0 0 0 5px rgba(255, 199, 0, 0.6); }
+            25%  { box-shadow: 0 0 0 0 rgba(255, 199, 0, 0); }
+            40%  { box-shadow: 0 0 0 5px rgba(255, 199, 0, 0.6); }
+            58%  { box-shadow: 0 0 0 0 rgba(255, 199, 0, 0); }
+            75%  { box-shadow: 0 0 0 3px rgba(255, 199, 0, 0.35); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 199, 0, 0); }
+        }
+        .editor-wrap.search-flash { animation: searchPulse 2.6s ease-out; border-radius: 4px; }
+        /* Cor de seleção mais viva (o texto encontrado fica selecionado nativamente e
+           permanece assim até a próxima ação do usuário, não some sozinho). */
+        #editor::selection { background: rgba(255, 199, 0, 0.55); color: inherit; }
+        #editor::-moz-selection { background: rgba(255, 199, 0, 0.55); color: inherit; }
         
         .template-category { font-size: 12px; font-weight: bold; color: var(--accent); text-transform: uppercase; margin-top: 10px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
         .template-item { text-align: left; background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; color: var(--text-primary); display: flex; flex-direction: column; gap: 4px; }
@@ -228,16 +301,131 @@
             .toolbar .separator { height: 1px; width: 100%; margin: 4px 0; background: var(--border); display: block; }
             
             .btn-close-drawer { display: block; align-self: flex-end; background: none; border: none; font-size: 28px; padding: 4px 12px; cursor: pointer; color: var(--text-primary); margin-bottom: 8px; border-radius: 50%; }
+
+            /* === BUSCAR/SUBSTITUIR: sobe para o topo no celular ===
+               Evita que o teclado virtual (que ocupa a parte de baixo da tela)
+               fique por cima do campo de busca e dos botões de ação. */
+            #searchModal { align-items: flex-start; }
+            #searchModal .modal { margin-top: 8px; max-height: 94vh; }
         }
         @media (min-width: 951px) { .btn-close-drawer { display: none; } .drawer-overlay { display: none; } }
+
+        /* === MODO FOCO === */
+        /* Esconde toda a "moldura" do app (header, abas, status bar) e deixa
+           só o editor. Pensado para telas pequenas (celular em campo) e
+           grandes (notebook) ao mesmo tempo: o editor simplesmente ocupa
+           100% da altura disponível em qualquer tamanho de tela. */
+        body.focus-mode .header,
+        body.focus-mode .tabs-bar,
+        body.focus-mode .status-bar,
+        body.focus-mode .drawer-overlay {
+            display: none !important;
+        }
+        body.focus-mode .editor-container {
+            border-top: none;
+            height: 100dvh;
+        }
+        body.focus-mode #editor {
+            padding-top: max(20px, env(safe-area-inset-top));
+        }
+
+        /* Botão flutuante de saída: só existe no DOM quando o modo foco
+           está ativo. Fica quase transparente por padrão — de propósito,
+           para não "poluir" a leitura — e só ganha destaque ao ser tocado
+           ou passar o mouse por perto. */
+        #btn-exit-focus {
+            display: none;
+        }
+        body.focus-mode #btn-exit-focus {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: max(10px, env(safe-area-inset-top));
+            right: max(10px, env(safe-area-inset-right));
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            cursor: pointer;
+            z-index: 3500;
+            opacity: 0.12;
+            transition: opacity 0.25s ease, transform 0.15s ease;
+        }
+        body.focus-mode #btn-exit-focus svg { width: 18px; height: 18px; fill: currentColor; pointer-events: none; }
+        body.focus-mode #btn-exit-focus:hover,
+        body.focus-mode #btn-exit-focus:focus-visible,
+        body.focus-mode #btn-exit-focus.show-hint {
+            opacity: 0.9;
+        }
+        body.focus-mode #btn-exit-focus:active { transform: scale(0.92); }
+        /* Em telas de toque não existe :hover — garantimos um mínimo de
+           opacidade um pouco maior para o alvo continuar "achável" sem
+           deixar de ser discreto. */
+        @media (hover: none) {
+            body.focus-mode #btn-exit-focus { opacity: 0.16; }
+        }
+
+        /* === MODO DISCRETO (usar junto do Ditado) === */
+        /* A Web não consegue gravar áudio com a tela de fato apagada (o
+           sistema operacional suspende a página). O que dá pra fazer é
+           impedir que a tela apague sozinha (Wake Lock) e escurecer a
+           interface quase 100%, simulando "tela apagada" sem matar o
+           reconhecimento de voz. Toque em qualquer ponto para espiar
+           por alguns segundos. */
+        #discreetOverlay { display: none; }
+        body.discreet-mode #discreetOverlay {
+            display: block;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 6000;
+            opacity: 0.97;
+            transition: opacity 0.3s ease;
+            cursor: pointer;
+        }
+        body.discreet-mode.discreet-reveal #discreetOverlay {
+            opacity: 0.05;
+            /* Sem isto, a camada — mesmo quase invisível — continuava
+               capturando todos os toques, e nenhum botão por trás dela
+               respondia. Ao "espiar", ela deixa de bloquear cliques. */
+            pointer-events: none;
+        }
+        #discreetDot {
+            position: absolute;
+            bottom: 16px; right: 16px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ff4d4d;
+            animation: discreetPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes discreetPulse { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.6; } }
     </style>
 </head>
-<body class="theme-light font-sans-serif">
-    
+<body>
+    <script>
+        // Aplica classes de tema/fonte salvas ANTES do resto do body ser
+        // interpretado — elimina o clarão branco na primeira pintura.
+        (function() {
+            var THEMES = ['theme-light', 'theme-dark', 'theme-sepia'];
+            var FONTS = ['font-sans-serif', 'font-serif', 'font-mono', 'font-writer', 'font-dev'];
+            var theme = 'theme-light', font = 'font-sans-serif';
+            try {
+                var t = localStorage.getItem('notepad_pro_Theme');
+                var f = localStorage.getItem('notepad_pro_Font');
+                if (THEMES.indexOf(t) > -1) theme = t;
+                if (FONTS.indexOf(f) > -1) font = f;
+            } catch(e) {}
+            document.body.className = theme + ' ' + font;
+        })();
+    </script>
+
     <div class="header" id="appHeader">
         <div class="title-bar">
             <svg class="app-icon" viewBox="0 0 24 24"><path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/></svg>
-            <span class="app-title">Bloco de Notas Acadêmico</span>
+            <span class="app-title">MN Field Notebook</span>
             <button id="btn-menu" class="btn-menu" aria-label="Menu" title="Menu"><svg viewBox="0 0 24 24"><path d="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z"/></svg></button>
         </div>
         <div class="drawer-overlay" id="drawerOverlay"></div>
@@ -259,10 +447,12 @@
             
             <span class="separator"></span>
             <button id="btn-voice" title="Ditar por Voz"><svg viewBox="0 0 24 24"><path d="M12,2A3,3 0 0,1 15,5V11A3,3 0 0,1 12,14A3,3 0 0,1 9,11V5A3,3 0 0,1 12,2M19,11C19,14.53 16.39,17.44 13,17.93V21H11V17.93C7.61,17.44 5,14.53 5,11H7A5,5 0 0,0 12,16A5,5 0 0,0 17,11H19Z"/></svg> Ditado</button>
+            <button id="btn-discreet" title="Tela Discreta (use junto do Ditado)"><svg id="icon-discreet" viewBox="0 0 24 24"><path d="M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7M11.83,9C11.89,9 11.94,9 12,9A3,3 0 0,1 15,12C15,12.05 15,12.11 15,12.16M7.53,9.8C7.2,10.47 7,11.21 7,12A5,5 0 0,0 12,17C12.79,17 13.53,16.8 14.2,16.47L12.65,14.92C12.44,14.97 12.22,15 12,15A3,3 0 0,1 9,12C9,11.77 9.03,11.56 9.08,11.35L7.53,9.8Z"/></svg> Discreto</button>
             <button id="btn-gps" title="Capturar GPS"><svg viewBox="0 0 24 24"><path d="M12,8A4,4 0 0,1 16,12A4,4 0 0,1 12,16A4,4 0 0,1 8,12A4,4 0 0,1 12,8M3.05,13H1V11H3.05C3.5,6.83 6.83,3.5 11,3.05V1H13V3.05C17.17,3.5 20.5,6.83 20.95,11H23V13H20.95C20.5,17.17 17.17,20.5 13,20.95V23H11V20.95C6.83,20.5 3.5,17.17 3.05,13M12,5A7,7 0 0,0 5,12A7,7 0 0,0 12,19A7,7 0 0,0 19,12A7,7 0 0,0 12,5Z"/></svg> GPS</button>
             <button id="btn-time" title="Inserir Data/Hora"><svg viewBox="0 0 24 24"><path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/></svg> Data</button>
             <button id="btn-meta" title="Inserir Metadados"><svg viewBox="0 0 24 24"><path d="M17 3H7C5.9 3 5.01 3.9 5.01 5L5 21L12 18L19 21V5C19 3.9 18.1 3 17 3M17 18L12 15.82L7 18V5H17V18Z"/></svg> Meta</button>
             <button id="btn-templates" title="Modelos Prontos"><svg viewBox="0 0 24 24"><path d="M14,10H2V12H14V10M14,6H2V8H14V6M2,16H10V14H2V16M21.5,11.5L23,13L16,20L11.5,15.5L13,14L16,17L21.5,11.5Z"/></svg> Modelos</button>
+            <button id="btn-focus" title="Modo Foco"><svg viewBox="0 0 24 24"><path d="M7,14H5V19H10V17H7V14M5,10H7V7H10V5H5V10M17,17H14V19H19V14H17V17M14,5V7H17V10H19V5H14Z"/></svg> Foco</button>
             
             <span class="separator"></span>
             <button id="btn-search" title="Buscar/Ctrl+F"><svg viewBox="0 0 24 24"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3Z"/></svg> Buscar</button>
@@ -275,7 +465,10 @@
     <input type="file" id="fileInput" accept=".txt,.md,.html,.text,.log" style="display: none;">
     
     <div class="editor-container" id="dropZone">
-        <textarea id="editor" placeholder="Digite, dite ou cole algo aqui..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+        <div class="editor-wrap">
+            <div class="line-numbers" id="lineNumbers" aria-hidden="true"><div class="line-numbers-inner" id="lineNumbersInner"></div></div>
+            <textarea id="editor" placeholder="Digite, dite ou cole algo aqui..." autocomplete="off" autocorrect="on" autocapitalize="sentences" spellcheck="true"></textarea>
+        </div>
     </div>
     
     <div class="status-bar" id="statusBar">
@@ -287,27 +480,46 @@
         <span class="stat-item">Zoom: <span id="zoomInfo" class="stat-value">15px</span></span>
     </div>
     
+    <button id="btn-exit-focus" title="Sair do Modo Foco (Esc)"><svg viewBox="0 0 24 24"><path d="M14,14H19V16H16V19H14V14M5,14H10V19H8V16H5V14M8,5H10V10H5V8H8V5M19,8V10H14V5H16V8H19Z"/></svg></button>
+
+    <div id="discreetOverlay" title="Toque para espiar a tela por alguns segundos"><span id="discreetDot"></span></div>
+
     <div class="toast-container" id="toastContainer"></div>
 
     <div class="modal-overlay" id="searchModal">
         <div class="modal">
             <h3>
                 <span style="display:flex; align-items:center; gap:8px;">
-                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16Z"/></svg> Localizar
+                    <svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16Z"/></svg> Localizar e Substituir
                 </span>
                 <span id="searchLineInfo" style="font-size: 11px; margin-left: auto; color: var(--accent); font-family: var(--font-mono); font-weight: normal;"></span>
             </h3>
-            <input type="text" id="searchInput" class="search-input" placeholder="O que deseja encontrar?">
-            <div class="modal-buttons">
+            <input type="text" id="searchInput" class="search-input" placeholder="O que deseja encontrar?" style="margin-bottom:8px;">
+            <input type="text" id="replaceInput" class="search-input" placeholder="Substituir por... (opcional)">
+
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; font-size:12px; color:var(--text-primary);">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none;">
+                    <input type="checkbox" id="searchCaseSensitive"> Diferenciar Maiúsc./Minúsc.
+                </label>
+                <span id="searchMatchCount" style="font-family:var(--f-mono); color:var(--accent); font-weight:bold; white-space:nowrap;">0 de 0</span>
+            </div>
+
+            <div class="modal-content-scroll" id="searchTabResults" style="display:none; max-height:130px; flex-grow:0; margin-bottom:10px;"></div>
+
+            <div class="modal-buttons" style="flex-wrap:wrap;">
                 <button class="btn btn-secondary" id="btn-close-search">Fechar</button>
-                <button class="btn btn-primary" id="btn-do-search">Buscar Próximo</button>
+                <button class="btn btn-secondary" id="btn-replace-all">Substituir Tudo (aba atual)</button>
+                <button class="btn btn-secondary" id="btn-replace-all-tabs" title="Substitui em todas as abas abertas, não só na atual">Substituir em Todas as Abas</button>
+                <button class="btn btn-secondary" id="btn-replace-one">Substituir</button>
+                <button class="btn btn-secondary" id="btn-search-prev">◀ Anterior</button>
+                <button class="btn btn-primary" id="btn-do-search">Próxima ▶</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="templateModal">
         <div class="modal">
-            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M14,10H2V12H14V10M14,6H2V8H14V6M2,16H10V14H2V16M21.5,11.5L23,13L16,20L11.5,15.5L13,14L16,17L21.5,11.5Z"/></svg> Biblioteca de Modelos (15)</h3>
+            <h3><svg viewBox="0 0 24 24" style="width:20px;height:20px;fill:var(--accent);"><path d="M14,10H2V12H14V10M14,6H2V8H14V6M2,16H10V14H2V16M21.5,11.5L23,13L16,20L11.5,15.5L13,14L16,17L21.5,11.5Z"/></svg> Biblioteca de Modelos (75)</h3>
             
             <div class="modal-content-scroll" id="templateList">
                 <div class="template-category">Relatórios Práticos e de Campo</div>
@@ -332,6 +544,112 @@
                 <button class="template-item" data-template="resumo_fixacao"><strong>13. Resumo Escolar Rápido</strong><span>Ideal para estruturação de conceitos centrais em sala de aula.</span></button>
                 <button class="template-item" data-template="botanica"><strong>14. Ficha Taxonômica Botânica</strong><span>Para identificação de famílias e morfologia de forma imediata.</span></button>
                 <button class="template-item" data-template="snippet"><strong>15. Snippet R/QGIS</strong><span>Caixa de preservação rápida de códigos e expressões espaciais.</span></button>
+
+                <!-- CATEGORIA: RELATÓRIOS TÉCNICOS E PROFISSIONAIS -->
+                <div class="template-category">Relatórios Técnicos e Profissionais</div>
+                <button class="template-item" data-template="relat_tecnico_admin"><strong>16. Relatório Técnico Admin.</strong><span>Modelo formal para inspeções, ensaios e atividades institucionais.</span></button>
+                <button class="template-item" data-template="relat_tecnico_cientifico"><strong>17. Relatório Técnico Científico</strong><span>Estrutura rigorosa para avaliações e pesquisas técnicas.</span></button>
+                <button class="template-item" data-template="relat_tecnico_em_v"><strong>18. Relatório Técnico em "V"</strong><span>Foco direto em constatações, evidências e fatores de suporte.</span></button>
+
+                <!-- CATEGORIA: CAMPO, LABORATÓRIO E EVENTOS -->
+                <div class="template-category">Campo, Laboratório e Eventos</div>
+                <button class="template-item" data-template="relat_visita_tecnica"><strong>19. Visita Técnica (Padrão)</strong><span>Modelo estruturado para atividades práticas em campo.</span></button>
+                <button class="template-item" data-template="relat_visita_tecnica_v2"><strong>20. Visita Técnica (V2)</strong><span>Versão otimizada com diretrizes críticas de redação técnica.</span></button>
+                <button class="template-item" data-template="relat_experiencia_lab"><strong>21. Experiência de Laboratório</strong><span>Foco em materiais, métodos e discussão de resultados.</span></button>
+                <button class="template-item" data-template="relat_experiencia_lab_8"><strong>22. Relatório Prático Específico</strong><span>Ideal para práticas como dendrometria e análises laboratoriais.</span></button>
+                <button class="template-item" data-template="relat_palestra"><strong>23. Relatório de Palestra/Evento</strong><span>Estrutura para registro de conteúdo e avaliação crítica de eventos.</span></button>
+                <button class="template-item" data-template="relat_portifolio_aula"><strong>24. Portfólio de Aula</strong><span>Registro de tópicos, percepções e materiais de aulas práticas/teóricas.</span></button>
+
+                <!-- CATEGORIA: PESQUISA E PLANEJAMENTO ACADÊMICO -->
+                <div class="template-category">Pesquisa Científica e Planejamento</div>
+                <button class="template-item" data-template="relat_pesquisa_cientifica"><strong>25. Pesquisa Científica</strong><span>Estrutura completa com introdução, método, resultados e conclusões.</span></button>
+                <button class="template-item" data-template="relat_plano_pesquisa"><strong>26. Plano de Pesquisa</strong><span>Template para delimitação, justificativa, hipóteses e cronograma.</span></button>
+
+                <!-- CATEGORIA: FICHAMENTOS, RESENHAS E RESUMOS -->
+                <div class="template-category">Fichamentos, Resenhas e Resumos</div>
+                <button class="template-item" data-template="relat_fichamentos"><strong>27. Fichamento Padrão</strong><span>Modelo modular para resumo, citações e análise crítica.</span></button>
+                <button class="template-item" data-template="relat_fichamento_unificado"><strong>28. Fichamento Unificado</strong><span>Focado na síntese de artigos e extração de ideias centrais.</span></button>
+                <button class="template-item" data-template="relat_resenhas"><strong>29. Resenha Crítica/Descritiva</strong><span>Estrutura completa para análise acadêmica de obras lidas.</span></button>
+                <button class="template-item" data-template="relat_resenha_unico"><strong>30. Resenha (Modelo Único)</strong><span>Modelo dinâmico ajustável para resenhas descritivas ou críticas.</span></button>
+                <button class="template-item" data-template="relat_resumos"><strong>31. Resumo Acadêmico</strong><span>Modelo estruturado em eixos de introdução, metodologia e resultados.</span></button>
+                <button class="template-item" data-template="relat_resumo_modular"><strong>32. Resumo Modular</strong><span>Adaptável para síntese de obras ou relatos de pesquisa prática.</span></button>
+
+                <!-- CATEGORIA: CITAÇÕES E REFERÊNCIAS BIBLIOGRÁFICAS -->
+                <div class="template-category">Referências Bibliográficas (ABNT e APA)</div>
+                <button class="template-item" data-template="ref_capitulo_abnt"><strong>33. Capítulo de Livro (ABNT)</strong><span>Formatação ABNT NBR 6023 para capítulos e coletâneas.</span></button>
+                <button class="template-item" data-template="ref_capitulo_apa"><strong>34. Capítulo de Livro (APA)</strong><span>Formatação APA 7ª ed. para capítulos organizados.</span></button>
+                <button class="template-item" data-template="ref_software_abnt"><strong>35. Software / QGIS / R (ABNT)</strong><span>Citação ABNT para softwares e pacotes de análise.</span></button>
+                <button class="template-item" data-template="ref_software_apa"><strong>36. Software / QGIS / R (APA)</strong><span>Citação APA para softwares e linguagens de programação.</span></button>
+                <button class="template-item" data-template="ref_artigo_abnt"><strong>37. Artigo Científico (ABNT)</strong><span>Norma ABNT para artigos de revistas acadêmicas.</span></button>
+                <button class="template-item" data-template="ref_artigo_apa"><strong>38. Artigo Científico (APA)</strong><span>Norma APA para artigos de revistas acadêmicas.</span></button>
+                <button class="template-item" data-template="ref_livro_abnt"><strong>39. Livro (ABNT)</strong><span>Norma ABNT para livros, manuais e guias de identificação.</span></button>
+                <button class="template-item" data-template="ref_livro_apa"><strong>40. Livro (APA)</strong><span>Norma APA para livros de publicação científica.</span></button>
+                <button class="template-item" data-template="ref_site_abnt"><strong>41. Site e Notícias (ABNT)</strong><span>Norma ABNT para páginas da web, blogs e portais.</span></button>
+                <button class="template-item" data-template="ref_site_apa"><strong>42. Site e Notícias (APA)</strong><span>Norma APA para publicações online.</span></button>
+                <button class="template-item" data-template="ref_audiovisual_abnt"><strong>43. Audiovisual (ABNT)</strong><span>Citação ABNT para vídeos, documentários e YouTube.</span></button>
+                <button class="template-item" data-template="ref_audiovisual_apa"><strong>44. Audiovisual (APA)</strong><span>Citação APA para material em vídeo e mídia.</span></button>
+
+                <!-- CATEGORIA: CITAÇÕES BIBTEX (ZOTERO/OBSIDIAN) -->
+                <div class="template-category">Snippets BibTeX</div>
+                <button class="template-item" data-template="ref_bibtex_capitulo_software"><strong>45. BibTeX (Capítulo/Software)</strong><span>Código fonte para softwares e coleções.</span></button>
+                <button class="template-item" data-template="ref_bibtex_artigo"><strong>46. BibTeX (Artigo)</strong><span>Código fonte de exportação para revistas.</span></button>
+                <button class="template-item" data-template="ref_bibtex_livro"><strong>47. BibTeX (Livro)</strong><span>Código fonte de exportação para livros.</span></button>
+                <button class="template-item" data-template="ref_bibtex_misc"><strong>48. BibTeX (Misc/Sites)</strong><span>Código fonte para mídias digitais e avulsas.</span></button>
+
+                <!-- CATEGORIA: DIÁRIO DE CAMPO E CADERNO FLORESTAL -->
+                <div class="template-category">Diário de Campo e Caderno Florestal</div>
+                <button class="template-item" data-template="diario_campo_registro"><strong>49. Diário de Campo & Livro de Bordo</strong><span>Registro completo de saída de campo: objetivo, roteiro, ocorrências e amostras.</span></button>
+                <button class="template-item" data-template="diario_ficha_parcela"><strong>50. Ficha de Parcela (Inventário Tropical)</strong><span>Mensuração de indivíduos arbóreos, DAP, altura e regeneração.</span></button>
+                <button class="template-item" data-template="diario_checklist_saida"><strong>51. Checklist de Expedição de Campo</strong><span>Documentação, EPIs, equipamentos de mensuração e geotecnologias.</span></button>
+                <button class="template-item" data-template="diario_registro_amostra"><strong>52. Registro de Amostra Botânica (Voucher)</strong><span>Ficha dendrológica completa: exsudato, folhas, fenologia e destino do testemunho.</span></button>
+                <button class="template-item" data-template="diario_cubagem_rigorosa"><strong>53. Cubagem Rigorosa de Árvores</strong><span>Método de Smalian, seções do tronco e fatores de forma.</span></button>
+                <button class="template-item" data-template="diario_prad_degradacao"><strong>54. Avaliação de Área Degradada (PRAD/EIA)</strong><span>Diagnóstico físico, vegetação e prescrição silvicultural de restauração.</span></button>
+                <button class="template-item" data-template="diario_vistoria_pericia"><strong>55. Laudo de Vistoria e Perícia Ambiental</strong><span>Constatações fáticas, danos ambientais e parecer conclusivo técnico.</span></button>
+
+                <!-- CATEGORIA: REDAÇÃO, COMUNICAÇÃO E PRODUÇÃO TEXTUAL -->
+                <div class="template-category">Redação, Comunicação & Produção Textual</div>
+                <button class="template-item" data-template="redacao_dissertativa_completa"><strong>56. Redação Dissertativa-Argumentativa</strong><span>Introdução, dois desenvolvimentos e conclusão com proposta de intervenção.</span></button>
+                <button class="template-item" data-template="resenha_fichamento_academico"><strong>57. Fichamento & Resenha Acadêmica</strong><span>Ideia central, citações diretas e apreciação crítica da obra.</span></button>
+
+                <!-- CATEGORIA: ESTUDO TEÓRICO, RESOLUÇÃO E SÍNTESE -->
+                <div class="template-category">Estudo Teórico, Resolução & Síntese</div>
+                <button class="template-item" data-template="resumo_teorico_aula"><strong>58. Resumo Teórico de Aula</strong><span>Conceitos fundamentais, fórmulas-chave e checklist de fixação.</span></button>
+                <button class="template-item" data-template="resolucao_exercicio_passo_a_passo"><strong>59. Resolução de Exercício Passo a Passo</strong><span>Dados, fórmulas, memória de cálculo e interpretação do resultado.</span></button>
+
+                <!-- CATEGORIA: SILVICULTURA, VIVEIROS E MANEJO OPERACIONAL -->
+                <div class="template-category">Silvicultura, Viveiros & Manejo Operacional</div>
+                <button class="template-item" data-template="silv_coleta_sementes"><strong>60. Coleta e Beneficiamento de Sementes</strong><span>Caracterização da matriz, colheita, secagem e rendimento do lote.</span></button>
+                <button class="template-item" data-template="silv_monitoramento_mudas"><strong>61. Monitoramento de Viveiro Florestal</strong><span>Substrato, biometria de mudas e Índice de Qualidade de Dickson.</span></button>
+                <button class="template-item" data-template="silv_fitossociologia_ivi"><strong>62. Inventário Fitossociológico (IVI)</strong><span>Densidade, frequência, dominância e índices de diversidade.</span></button>
+
+                <!-- CATEGORIA: LABORATÓRIO E ANÁLISE TECNOLÓGICA -->
+                <div class="template-category">Laboratório & Análise Tecnológica</div>
+                <button class="template-item" data-template="lab_umidade_densidade_madeira"><strong>63. Ensaio de Umidade & Densidade da Madeira</strong><span>Método gravimétrico, densidade básica e classificação tecnológica.</span></button>
+                <button class="template-item" data-template="lab_analise_solo_fertilidade"><strong>64. Análise Química & Fertilidade do Solo</strong><span>CTC, saturação por bases/alumínio e recomendação de calagem.</span></button>
+                <button class="template-item" data-template="lab_ensaio_germinacao"><strong>65. Ensaio de Germinação & Tetrazólio</strong><span>Contagens periódicas, IVG, TMG e teste de viabilidade rápida.</span></button>
+
+                <!-- CATEGORIA: ORGANIZAÇÃO ACADÊMICA E PRODUTIVIDADE -->
+                <div class="template-category">Organização Acadêmica & Produtividade</div>
+                <button class="template-item" data-template="org_planejamento_semanal"><strong>66. Planejamento Semanal & Blocos Pomodoro</strong><span>Prioridades da semana, grade de estudo e autoavaliação.</span></button>
+                <button class="template-item" data-template="org_horas_complementares"><strong>67. Rastreador de Atividades Complementares</strong><span>Controle de horas em Ensino, Pesquisa e Extensão (PPC UEPA).</span></button>
+                <button class="template-item" data-template="org_diario_orientacao"><strong>68. Diário de Orientação & Reunião de Pesquisa</strong><span>Pauta, feedbacks do orientador e plano de ação para o TCC.</span></button>
+
+                <!-- CATEGORIA: CORRESPONDÊNCIA E REQUERIMENTOS -->
+                <div class="template-category">Correspondência & Requerimentos</div>
+                <button class="template-item" data-template="email_formal_docente"><strong>69. E-mail Formal ao Docente</strong><span>Modelo cordial para orientação, dúvidas ou declarações.</span></button>
+                <button class="template-item" data-template="req_institucional_uepa"><strong>70. Requerimento Institucional (UEPA)</strong><span>Homologação de horas, justificativa de falta e declarações.</span></button>
+
+                <!-- CATEGORIA: ESTATÍSTICA E CIÊNCIA DE DADOS FLORESTAIS -->
+                <div class="template-category">Estatística & Ciência de Dados Florestais</div>
+                <button class="template-item" data-template="estat_script_r_anova"><strong>71. Script em R — ANOVA & Teste de Tukey</strong><span>Código pronto para análise de variância e comparações múltiplas.</span></button>
+                <button class="template-item" data-template="estat_regressao_hipsometrica"><strong>72. Modelos Hipsométricos & Volumétricos (R)</strong><span>Comparação de modelos clássicos de altura em função do DAP.</span></button>
+
+                <!-- CATEGORIA: TRABALHO DE CONCLUSÃO DE CURSO (TCC) -->
+                <div class="template-category">Trabalho de Conclusão de Curso (TCC)</div>
+                <button class="template-item" data-template="tcc_diario_escrita"><strong>73. Diário de Escrita & Avanço do TCC</strong><span>Foco da sessão, produção do dia e rastreamento de bloqueios.</span></button>
+                <button class="template-item" data-template="tcc_checklist_pre_banca"><strong>74. Checklist de Revisão Pré-Banca</strong><span>Conformidade institucional, revisão textual e roteiro da defesa.</span></button>
+                <button class="template-item" data-template="tcc_matriz_correcoes_banca"><strong>75. Matriz de Correções Pós-Banca</strong><span>Sistematiza as exigências da banca e os encaminhamentos finais.</span></button>
+
             </div>
 
             <div class="modal-buttons">
@@ -346,28 +664,1141 @@
         // SISTEMA DE TEMPLATES MODULAR
         // ===================================================
         const MODELS_LIBRARY = {
-            relat_visita: `# RELATÓRIO DE VISITA TÉCNICA\n\n**Instituição/Curso:** Universidade do Estado do Pará - UEPA, Campus Castanhal | Engenharia Florestal  \n**Autor(es):** Evandro Maia Neves  \n**Vínculo Acadêmico:** Disciplina: [Insira o Nome da Disciplina] | Professor: Prof. Dr. Iêdo Souza  \n**Local e Data:** [Ex: Reserva Extrativista Marinha Mãe Grande (Curuçá - PA), DD de Mês de YYYY]  \n\n---\n> 📌 **Diretriz de Escrita:** Relatório focado em dados práticos. Use estrutura frasal direta (Sujeito + Verbo + Objeto). Neutralidade absoluta.\n---\n\n### 1. INTRODUÇÃO\n[Local da visita (município), objetivo geral e contextualização com a disciplina. "A visita técnica foi realizada no local X... com o objetivo geral de..."]\n\n### 2. OBJETIVOS DA ATIVIDADE DE PESQUISA\n* **Etapa 1 (Reconhecimento):** [Verbo no infinitivo]...\n* **Etapa 2 (Mensuração/Amostragem):** [Verbo no infinitivo]...\n* **Etapa 3 (Coleta de Variáveis):** [Verbo no infinitivo]...\n\n### 3. DESCRIÇÃO DO PROCESSO E ASPECTOS OBSERVADOS\n[Detalhe a ordem cronológica e operacional das atividades de campo e métodos de coleta de dados.]\n\n### 4. INTERPRETAÇÃO DOS DADOS\n[Apresente resultados numéricos ou estruturais obtidos e faça a discussão comparando-os com a literatura.]\n\n### 5. COMENTÁRIOS FINAIS\n[Feche o documento atestando se os objetivos foram cumpridos e recomendações técnicas.]\n`,
+            relat_visita: `# RELATÓRIO DE VISITA TÉCNICA\n\n**Instituição/Curso:** Universidade do Estado do Pará - UEPA, Campus Castanhal | Engenharia Florestal  \n**Autor(es):** Evandro Maia Neves  \n**Vínculo Acadêmico:** Disciplina: [Insira o Nome da Disciplina] | Professor: Prof. Dr. [NOME E SOBRENOME]  \n**Local e Data:** [Ex: Reserva Extrativista Marinha Mãe Grande (Curuçá - PA), DD de Mês de YYYY]  \n\n---\n> 📌 **Diretriz de Escrita:** Relatório focado em dados práticos. Use estrutura frasal direta (Sujeito + Verbo + Objeto). Neutralidade absoluta.\n---\n\n### 1. INTRODUÇÃO\n[Local da visita (município), objetivo geral e contextualização com a disciplina. "A visita técnica foi realizada no local X... com o objetivo geral de..."]\n\n### 2. OBJETIVOS DA ATIVIDADE DE PESQUISA\n* **Etapa 1 (Reconhecimento):** [Verbo no infinitivo]...\n* **Etapa 2 (Mensuração/Amostragem):** [Verbo no infinitivo]...\n* **Etapa 3 (Coleta de Variáveis):** [Verbo no infinitivo]...\n\n### 3. DESCRIÇÃO DO PROCESSO E ASPECTOS OBSERVADOS\n[Detalhe a ordem cronológica e operacional das atividades de campo e métodos de coleta de dados.]\n\n### 4. INTERPRETAÇÃO DOS DADOS\n[Apresente resultados numéricos ou estruturais obtidos e faça a discussão comparando-os com a literatura.]\n\n### 5. COMENTÁRIOS FINAIS\n[Feche o documento atestando se os objetivos foram cumpridos e recomendações técnicas.]\n`,
             relat_experiencia: `# [INSERIR TÍTULO DA PRÁTICA - Ex: Extração de DNA ou Mensuração Florestal]\n\n**Autor(es):** Evandro Maia Neves\n**Data:** [DD/MM/AAAA]\n**Disciplina:** [Ex: Inventário Florestal, Dendrometria - UEPA]\n\n---\n\n## Introdução\n> **Guia:** O que foi relatado? Por quê (justificativa)? Para quê (objetivos)? Qual a base teórica?\n> **Refinamento Técnico:** Escreva de forma impessoal e direta. O último parágrafo deve declarar o objetivo geral da prática.\n\n[O presente relatório tem como objetivo...]\n\n## Esquema de Investigação / Materiais e Métodos\n> **Guia:** Como foi feito? Detalhe os procedimentos e instrumentos para garantir reprodutibilidade. Estruture em S-V-O.\n\n[Foram utilizados os seguintes equipamentos... O procedimento consistiu em...]\n\n## Resultados e Discussão\n> **Guia:** O que foi encontrado? Discuta os achados frente ao objetivo inicial e à literatura teórica.\n\n[Os dados obtidos demonstraram que... Ao analisar os resultados em face da teoria...]\n\n## Referências\n> **Guia:** Obras consultadas em ordem alfabética.\n\n* SOBRENOME, Nome. *Título da obra*. Local: Editora, Ano.\n`,
-            relat_tecnico: `[TÍTULO DO RELATÓRIO EM MAIÚSCULAS]\n\nAutor: Evandro Maia Neves\nData: [DD/MM/AAAA]\nDestinatário: [Avaliador (Ex: Prof. Dr. Iêdo Souza) / UEPA]\n========================================\n\n[ SINOPSE ]\n[Visão global rápida. Parágrafo único com objetivo, metodologia e principal conclusão.]\n\n[ INTRODUÇÃO ]\n[Problema abordado e o objetivo principal do estudo técnico-científico.]\n\n[ DESENVOLVIMENTO ]\n[Descreva as coordenadas, amostragem e softwares de geoprocessamento / estatística aplicados.]\n\n[ RESULTADOS E DISCUSSÕES ]\n[Exponha os dados quantitativos exatos. Confronte com a literatura oficial sem uso de adjetivos de valor.]\n\n[ CONCLUSÃO ]\n[Responda diretamente aos objetivos propostos e sugira as próximas etapas técnicas.]\n`,
-            relat_evento: `# RELATÓRIO DE PALESTRA / EVENTO\n\n## 1. Identificação\n* **Nome do Aluno:** Evandro Maia Neves\n* **Instituição / Curso:** Engenharia Florestal - UEPA\n* **Tema da Palestra:** [Insira o título exato]\n* **Palestrante(s):** [Nome completo e titulação]\n* **Disciplina / Professor:** [Ex: Prof. Dr. Iêdo Souza]\n* **Data:** [DD/MM/AAAA] | **Local:** [Ex: Auditório Central]\n* **Horário:** [00:00] às [00:00]\n\n---\n\n## 2. Conteúdo Textual\n\n### Introdução\n> **Diretrizes:** Redija de forma estritamente impessoal e objetiva.\n[O presente documento relata as atividades desenvolvidas na palestra técnica...]\n\n### Desenvolvimento\n> **Diretrizes:** Descreva o núcleo técnico do evento. Sintetize as ideias centrais e dados apresentados.\n[A abordagem do tema pautou-se nos seguintes pontos...]\n\n### Conclusão (Avaliação)\n> **Diretrizes:** Apresente uma análise técnica e crítica do evento, pontuando se as metas foram alcançadas.\n[Em suma, constata-se que o evento cumpriu satisfatoriamente o seu papel, visto que...]\n\n---\n## 3. Validação\n**Assinatura do Acadêmico** | **Assinatura do Responsável**\n`,
-            piramide_invertida: `**UNIVERSIDADE DO ESTADO DO PARÁ (UEPA)** *Engenharia Florestal* \n**Orientador:** Prof. Dr. Iêdo Souza  | **Autor:** Evandro Maia Neves\n\n# [MANCHETE DO FATO TÉCNICO OBSERVADO]\n\n> Durante a investigação técnica, [O quê? Fato em estrutura SVO], fato constatado [Quem?], [Quando?], [Onde?]. A verificação ocorreu [Como? Modo de constatação], processo estruturado [Por quê? Causa provável].\n\n## [Subtítulo 1: Evidências Principais]\n[Métricas e dados vitais. Elimine adjetivação ou viés subjetivo.]\n\n## [Subtítulo 2: Fatores de Suporte e Histórico]\n[Dados secundários, comparações com inventários ou parâmetros de literatura.]\n\n### Informações Adicionais\n[Softwares de mapeamento/processamento usados, notas marginais e próximos passos.]\n`,
-            portfolio: `**UNIVERSIDADE DO ESTADO DO PARÁ – CAMPUS CASTANHAL**\n*Engenharia Florestal – 8º Período*\n\n**Disciplina:** [Nome da Disciplina] | **Professor(a):** Prof. Dr. Iêdo Souza\n**Objeto de observação:** [Ex: Coleta e identificação de espécies de mangue]\n**Período/Data:** [Turno - DD/MM/AAAA] | **Graduando:** Evandro Maia Neves\n\n---\n### Tema amplo da aula\n[Assunto principal abordado]\n\n### Tópicos específicos trabalhados\n- [Tópico 1]\n- [Tópico 2]\n\n### Estratégias didáticas\n[Como a aula foi conduzida: campo, software, laboratório?]\n\n### Minhas percepções sobre a aula\n[Como aplicar o conhecimento na Eng. Florestal. Destaque dificuldades e aprendizados com rigor técnico.]\n\n### Material utilizado e produzido\n[Softwares, registros QGIS, fotografias e artigos a inserir no Zotero.]\n`,
-            relat_cientifico: `# RELATÓRIO DE PESQUISA CIENTÍFICA\n\n## 1. IDENTIFICAÇÃO DO TRABALHO E DA AUTORIA\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Insira o título conciso]\n- **Orientador:** Prof. Dr. Iêdo Souza\n- **Área:** Engenharia Florestal\n\n## 2. PARTE TEXTUAL\n> **Critérios Norteadores:** Reprodutibilidade e Forma.\n\n### INTRODUÇÃO (TEMA E PROBLEMA)\n*[Contextualização teórica/prática e delimitação do problema]*\n\n### JUSTIFICATIVA\n*[Demonstre os motivos da pesquisa]*\n\n### OBJETIVOS DO TRABALHO\n**Geral:**\n- [Verbo no infinitivo + Ação central]\n**Específicos:**\n- [Verbo no infinitivo + Etapa]\n\n### METODOLOGIA EXECUTADA\n*[Foco na Reprodutibilidade: universo, instrumentos de coleta (QGIS, R, etc) e amostragem]*\n\n### RESULTADOS E DISCUSSÃO\n*[Apresentação objetiva e discussão à luz da literatura]*\n\n### CONCLUSÕES\n*[Respostas ao problema e contribuições finais]*\n\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT NBR 6023)\n*[Liste no mínimo 3 fontes base. Mantenha padrão ABNT]*\n`,
-            plano_pesquisa: `# PLANO DE PESQUISA\n\n## 1. PARTE PRÉ-TEXTUAL\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Título Provisório]\n- **Orientador:** Prof. Dr. Iêdo Souza\n\n---\n## 2. PARTE TEXTUAL\n\n### TEMA E CONTEXTUALIZAÇÃO\n> **Diretriz:** Assunto principal com breve contextualização S-V-O.\n[Seu texto aqui]\n\n### DELIMITAÇÃO DO TEMA / PROBLEMA\n> **Diretriz:** Apenas UMA frase (interrogativa ou afirmativa) que sintetize o que será investigado.\n[Sua pergunta aqui]\n\n### JUSTIFICATIVA\n> **Diretriz:** Responde "Por quê?". Argumentos em tópicos.\n- **Motivo Acadêmico:** [Seu texto]\n- **Motivo Social/Profissional:** [Seu texto]\n\n### OBJETIVOS\n**Geral:**\n- [Objetivo central]\n**Específicos:**\n- [Etapa 1]\n- [Etapa 2]\n\n### HIPÓTESE\n> **Diretriz:** Parágrafo com provável resposta ao problema.\n[Seu texto aqui]\n\n### REFERENCIAL TEÓRICO\n> **Diretriz:** Apresentação conceitual superficial dos autores base.\n[Seu texto aqui]\n\n### METODOLOGIA\n- **Raciocínio:** [ex: Dedutivo]\n- **Abordagem:** [ex: Quantitativa / Qualitativa]\n- **Universo/Amostra:** [ex: 5 parcelas de 10x10m]\n- **Instrumentos de coleta:** [ex: Fita diamétrica, GPS]\n- **Tratamento de dados:** [ex: Análise estatística R, mapeamento QGIS]\n\n### CRONOGRAMA\n- Levantamento bibliográfico - [Mês/Ano]\n- Pesquisa de campo - [Mês/Ano]\n- Processamento de dados - [Mês/Ano]\n\n---\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT)\n[Insira as referências em formato ABNT]\n`,
+            relat_tecnico: `[TÍTULO DO RELATÓRIO EM MAIÚSCULAS]\n\nAutor: Evandro Maia Neves\nData: [DD/MM/AAAA]\nDestinatário: [Avaliador (Ex: Prof. Dr. [NOME E SOBRENOME]) / UEPA]\n========================================\n\n[ SINOPSE ]\n[Visão global rápida. Parágrafo único com objetivo, metodologia e principal conclusão.]\n\n[ INTRODUÇÃO ]\n[Problema abordado e o objetivo principal do estudo técnico-científico.]\n\n[ DESENVOLVIMENTO ]\n[Descreva as coordenadas, amostragem e softwares de geoprocessamento / estatística aplicados.]\n\n[ RESULTADOS E DISCUSSÕES ]\n[Exponha os dados quantitativos exatos. Confronte com a literatura oficial sem uso de adjetivos de valor.]\n\n[ CONCLUSÃO ]\n[Responda diretamente aos objetivos propostos e sugira as próximas etapas técnicas.]\n`,
+            relat_evento: `# RELATÓRIO DE PALESTRA / EVENTO\n\n## 1. Identificação\n* **Nome do Aluno:** Evandro Maia Neves\n* **Instituição / Curso:** Engenharia Florestal - UEPA\n* **Tema da Palestra:** [Insira o título exato]\n* **Palestrante(s):** [Nome completo e titulação]\n* **Disciplina / Professor:** [Ex: Prof. Dr. [NOME E SOBRENOME]]\n* **Data:** [DD/MM/AAAA] | **Local:** [Ex: Auditório Central]\n* **Horário:** [00:00] às [00:00]\n\n---\n\n## 2. Conteúdo Textual\n\n### Introdução\n> **Diretrizes:** Redija de forma estritamente impessoal e objetiva.\n[O presente documento relata as atividades desenvolvidas na palestra técnica...]\n\n### Desenvolvimento\n> **Diretrizes:** Descreva o núcleo técnico do evento. Sintetize as ideias centrais e dados apresentados.\n[A abordagem do tema pautou-se nos seguintes pontos...]\n\n### Conclusão (Avaliação)\n> **Diretrizes:** Apresente uma análise técnica e crítica do evento, pontuando se as metas foram alcançadas.\n[Em suma, constata-se que o evento cumpriu satisfatoriamente o seu papel, visto que...]\n\n---\n## 3. Validação\n**Assinatura do Acadêmico** | **Assinatura do Responsável**\n`,
+            piramide_invertida: `**UNIVERSIDADE DO ESTADO DO PARÁ (UEPA)** *Engenharia Florestal* \n**Orientador:** Prof. Dr. [NOME E SOBRENOME]  | **Autor:** Evandro Maia Neves\n\n# [MANCHETE DO FATO TÉCNICO OBSERVADO]\n\n> Durante a investigação técnica, [O quê? Fato em estrutura SVO], fato constatado [Quem?], [Quando?], [Onde?]. A verificação ocorreu [Como? Modo de constatação], processo estruturado [Por quê? Causa provável].\n\n## [Subtítulo 1: Evidências Principais]\n[Métricas e dados vitais. Elimine adjetivação ou viés subjetivo.]\n\n## [Subtítulo 2: Fatores de Suporte e Histórico]\n[Dados secundários, comparações com inventários ou parâmetros de literatura.]\n\n### Informações Adicionais\n[Softwares de mapeamento/processamento usados, notas marginais e próximos passos.]\n`,
+            portfolio: `**UNIVERSIDADE DO ESTADO DO PARÁ – CAMPUS CASTANHAL**\n*Engenharia Florestal – 8º Período*\n\n**Disciplina:** [Nome da Disciplina] | **Professor(a):** Prof. Dr. [NOME E SOBRENOME]\n**Objeto de observação:** [Ex: Coleta e identificação de espécies de mangue]\n**Período/Data:** [Turno - DD/MM/AAAA] | **Graduando:** Evandro Maia Neves\n\n---\n### Tema amplo da aula\n[Assunto principal abordado]\n\n### Tópicos específicos trabalhados\n- [Tópico 1]\n- [Tópico 2]\n\n### Estratégias didáticas\n[Como a aula foi conduzida: campo, software, laboratório?]\n\n### Minhas percepções sobre a aula\n[Como aplicar o conhecimento na Eng. Florestal. Destaque dificuldades e aprendizados com rigor técnico.]\n\n### Material utilizado e produzido\n[Softwares, registros QGIS, fotografias e artigos a inserir no Zotero.]\n`,
+            relat_cientifico: `# RELATÓRIO DE PESQUISA CIENTÍFICA\n\n## 1. IDENTIFICAÇÃO DO TRABALHO E DA AUTORIA\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Insira o título conciso]\n- **Orientador:** Prof. Dr. [NOME E SOBRENOME]\n- **Área:** Engenharia Florestal\n\n## 2. PARTE TEXTUAL\n> **Critérios Norteadores:** Reprodutibilidade e Forma.\n\n### INTRODUÇÃO (TEMA E PROBLEMA)\n*[Contextualização teórica/prática e delimitação do problema]*\n\n### JUSTIFICATIVA\n*[Demonstre os motivos da pesquisa]*\n\n### OBJETIVOS DO TRABALHO\n**Geral:**\n- [Verbo no infinitivo + Ação central]\n**Específicos:**\n- [Verbo no infinitivo + Etapa]\n\n### METODOLOGIA EXECUTADA\n*[Foco na Reprodutibilidade: universo, instrumentos de coleta (QGIS, R, etc) e amostragem]*\n\n### RESULTADOS E DISCUSSÃO\n*[Apresentação objetiva e discussão à luz da literatura]*\n\n### CONCLUSÕES\n*[Respostas ao problema e contribuições finais]*\n\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT NBR 6023)\n*[Liste no mínimo 3 fontes base. Mantenha padrão ABNT]*\n`,
+            plano_pesquisa: `# PLANO DE PESQUISA\n\n## 1. PARTE PRÉ-TEXTUAL\n- **Instituição:** Universidade do Estado do Pará - UEPA, Campus Castanhal\n- **Curso/Ano:** Engenharia Florestal\n- **Autor:** Evandro Maia Neves\n- **Título:** [Título Provisório]\n- **Orientador:** Prof. Dr. [NOME E SOBRENOME]\n\n---\n## 2. PARTE TEXTUAL\n\n### TEMA E CONTEXTUALIZAÇÃO\n> **Diretriz:** Assunto principal com breve contextualização S-V-O.\n[Seu texto aqui]\n\n### DELIMITAÇÃO DO TEMA / PROBLEMA\n> **Diretriz:** Apenas UMA frase (interrogativa ou afirmativa) que sintetize o que será investigado.\n[Sua pergunta aqui]\n\n### JUSTIFICATIVA\n> **Diretriz:** Responde "Por quê?". Argumentos em tópicos.\n- **Motivo Acadêmico:** [Seu texto]\n- **Motivo Social/Profissional:** [Seu texto]\n\n### OBJETIVOS\n**Geral:**\n- [Objetivo central]\n**Específicos:**\n- [Etapa 1]\n- [Etapa 2]\n\n### HIPÓTESE\n> **Diretriz:** Parágrafo com provável resposta ao problema.\n[Seu texto aqui]\n\n### REFERENCIAL TEÓRICO\n> **Diretriz:** Apresentação conceitual superficial dos autores base.\n[Seu texto aqui]\n\n### METODOLOGIA\n- **Raciocínio:** [ex: Dedutivo]\n- **Abordagem:** [ex: Quantitativa / Qualitativa]\n- **Universo/Amostra:** [ex: 5 parcelas de 10x10m]\n- **Instrumentos de coleta:** [ex: Fita diamétrica, GPS]\n- **Tratamento de dados:** [ex: Análise estatística R, mapeamento QGIS]\n\n### CRONOGRAMA\n- Levantamento bibliográfico - [Mês/Ano]\n- Pesquisa de campo - [Mês/Ano]\n- Processamento de dados - [Mês/Ano]\n\n---\n## 3. PARTE PÓS-TEXTUAL\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT)\n[Insira as referências em formato ABNT]\n`,
             resumo_modular: `# [Título da Obra ou Relatório]\n\n**Metadados:** Autor: Evandro Maia Neves | Data: [[YYYY-MM-DD]]\n**Referência Base:** [Cole a citação ABNT aqui]\n---\n\n## 1. Eixo Introdutório (Tema, Justificativa e Objetivos)\n[Realidade empírica, problema abordado e objetivos. Uso de S-V-O.]\n\n## 2. Eixo de Desenvolvimento (Escolha A ou B)\n* **[OPÇÃO A] Metodologia:** [Para Relatórios/Pesquisa Prática]\n* **[OPÇÃO B] Síntese da Obra:** [Para Livros e Artigos lidos]\n\n## 3. Eixo de Desfecho (Escolha A ou B)\n* **[OPÇÃO A] Resultados e Conclusão:** [Foco nos dados gerados e resposta à hipótese.]\n* **[OPÇÃO B] Avaliação Crítica:** [Exclusivo para Resenha Crítica. Avalie o método do autor original.]\n\n> 🛠️ CHECKLIST DE EXPORTAÇÃO:\n> - Homotópico/Expandido: Aglutine em 1 parágrafo único.\n> - Informativo/Crítico: Separe os parágrafos.\n> - Descritivo: Converta em Tópicos.\n`,
             fichamento: `---\ntags: [fichamento, engenharia-florestal, artigo]\ndata_leitura: [YYYY-MM-DD]\n---\n\n# Fichamento: [Tema Geral ou Título Curto]\n**Referência Bibliográfica:** [SOBRENOME, Nome]. **[Título]**. [Cidade]: [Revista], [Ano].\n\n## 1. Síntese de Conteúdo (Resumo)\n[Problema, métodos e resultados principais do autor. Estrutura Sujeito-Verbo-Objeto.]\n\n## 2. Ideia Central do Autor\n[Tese central ou premissa fundamental]\n\n## 3. Citações Chave\n> "[Transcreva literal. Use reticências [...] para supressões.]" (p. XX)\n\n## 4. Comentário Analítico\n[Avaliação técnica rigorosa: o método é válido? Como isso se aplica aos levantamentos em campo?]\n`,
             resenha: `---\ntags: [resenha, {crítica_ou_descritiva}, engenharia-florestal]\n---\nSOBRENOME, Nome. **Título da Obra**. Cidade: Revista/Editora, Ano.\n\n<center>**RESENHA {CRÍTICA / DESCRITIVA}**</center>\n<div align="right">Evandro Maia Neves¹</div>\n\n### 1. Introdução\nUma análise {crítica / descritiva} é o que se apresenta a seguir, cujo texto-fonte foi "[Obra]", de autoria de [Autor]. Oportunamente, nesta obra, o autor traz à tona o assunto [Assunto] com o objetivo de [Objetivo].\n\n### 2. Desenvolvimento (Síntese)\n[Sintetize métodos, amostragens e resultados. Estritamente factual.]\n\n### 3. Fechamento (Conclusão / Análise)\n[SE DESCRITIVA: Apenas exponha a conclusão do autor. SE CRÍTICA: Avalie a originalidade, falhas e limitações do estudo.]\n\n---\n¹ Acadêmico de Engenharia Florestal (UEPA), Campus Castanhal.\n`,
             levantamento_biblio: `# RELATÓRIO DE FICHAMENTO BIBLIOGRÁFICO\n\n## 1. Metadados e Dados da Obra\n- **Norma:** [ABNT ou APA]\n- **Tipo:** [Artigo / Livro / Site / Vídeo]\n- **Referência Principal:** [Ex: SOUZA, I.; NEVES, E. M. Título... v.10, p.15. 2026]\n\n## 2. Resultados de Citação\n- **Parentética:** (Souza e Neves, 2026)\n- **Narrativa:** Segundo Souza e Neves (2026)...\n\n## 3. Análise e Notas\n\n### Resumo Objetivo\n> **Diretriz:** Estruture as frases no formato sujeito-verbo-objeto. Isento de interpretações pessoais.\n[Descreva os achados principais do texto aqui]\n\n### Palavras-chave Relacionadas\n- #tag1\n- #tag2\n\n### Citações Diretas Importantes\n1. > "[Cole a citação exata aqui]" (AUTOR, Ano, p. XX)\n\n### Observações para o Projeto\n> **Diretriz:** Aponte a utilidade prática do texto na sua pesquisa/trabalho atual.\n[Insira suas observações técnicas aqui]\n`,
             resumo_fixacao: `## 📚 Resumo de Estudo: [Assunto]\n**Data:** [DD/MM/AAAA]\n\n### 📌 Ideias Centrais\n* **Tópico Principal:** [Resuma em uma única frase]\n* **Tags:** #engenharia-florestal \n\n### 🔍 Explicação Detalhada\n* **Conceito A:** [Explicação]\n* **Conceito B:** [Explicação]\n\n### ⚠️ Atenção (Pegadinhas)\n> **Cuidado:** [Exceções à regra ou erros metodológicos]\n\n### ❓ Ações\n- [ ] Pesquisar artigo em inglês sobre: \n`,
             botanica: `### FICHA TAXONÔMICA BOTÂNICA\n**Família:** (ex: Fabaceae, Lecythidaceae)\n**Gênero:** **Espécie:** \n**Nome Vulgar:** \n**Hábito Arbóreo:** \n**Morfologia da Flor:** \n**Presença de Pulvino:** [ ] Sim [ ] Não\n**Local de Coleta:** (ex: Marapanim / Curuçá)\n**Coordenadas GPS:** \n**Observações de Campo:** \n`,
-            snippet: `## 💻 Snippet: [Nome do Script]\n**Linguagem:** R / QGIS\n**Objetivo:** [Ex: Gráfico de dispersão, Mapeamento Espacial]\n\n\`\`\`R\n# Setup pacotes\nlibrary(ggplot2)\n\n# Código / Expressão Lógica\n\`\`\`\n`
+            snippet: `## 💻 Snippet: [Nome do Script]\n**Linguagem:** R / QGIS\n**Objetivo:** [Ex: Gráfico de dispersão, Mapeamento Espacial]\n\n\`\`\`R\n# Setup pacotes\nlibrary(ggplot2)\n\n# Código / Expressão Lógica\n\`\`\`\n`,
+            relat_tecnico_admin: `<div align="center">\n\n**[NOME DA INSTITUIÇÃO / EMPRESA EM LETRAS MAIÚSCULAS]** *[Nome do Setor, Departamento ou Curso Responsável]* </div>\n\n***\n\n<div align="right">\n\n[Cidade - UF], [DD] de [Mês] de [AAAA]\n\n</div>\n\n**Assunto:** Relatório Técnico de [Tema Principal da Atividade, Ex: Expedição/Inspeção/Ensaio]  \n\n**Ao(À) [Pronome de Tratamento Adequado, Nome do Destinatário e Cargo]**\n\nCumprimentando-o(a) cordialmente, apresento a V. Sa. o relatório técnico referente a(o) [nome da atividade/evento/visita] realizada(o) em [local específico/área de estudo], cujo objetivo central foi [descrever o propósito principal da ação de forma direta, clara e concisa].\n\n2. Durante [período/visita técnica/procedimento], a equipe/emissor utilizou [mencionar métodos, ferramentas aplicadas como softwares, equipamentos ou critérios de análise] para [descrever a ação principal executada]. Foram coletados/analisados dados relativos a [citar os principais dados ou amostras]. A área de estudo/objeto analisado apresentou [descrever a situação encontrada de forma totalmente objetiva, quantitativa se possível, e livre de impressões pessoais].\n\n3. Conclui-se que [apresentar o diagnóstico final extraído das observações e dados]. Diante dos fatos expostos, recomenda-se [indicar as soluções propostas, encaminhamentos técnicos ou sugestão de prazos e datas para próximas ações necessárias].\n\n[Termo de Despedida Formal, Ex: Respeitosamente / Atenciosamente],\n\n<div align="center">\n\n<br>\n\n**[Nome Completo do Emissor]** *[Cargo, Função ou Titulação]* </div>\n`,
+            relat_tecnico_cientifico: `# [Insira o Título do Relatório Aqui]\n\n**Autor:** [Autor]  \n**Data:** [DD/MM/AAAA]  \n**Destinatário:** [Nome do Avaliador/Orientador (Ex: [Nome do Avaliador/Orientador]) - Instituição (Ex: [Instituição])]  \n\n---\n\n## Sinopse\n> **Diretriz de Preenchimento:** Uma visão global rápida da atividade e dos principais achados. Deve ser estruturada como um resumo executivo técnico: objetivo, metodologia simplificada, resultados centrais e conclusão expressa. Evite adjetivos e pontos de vista pessoais.\n\n## Introdução\n> **Diretriz de Preenchimento:** Contextualize o tema e delimite o escopo da pesquisa ou da visita técnica. Finalize a seção declarando formalmente o objetivo geral e os objetivos específicos do documento de maneira clara e impessoal.\n\n## Desenvolvimento\n> **Diretriz de Preenchimento:** Descrição técnica das áreas avaliadas e a metodologia aplicada. Insira a narrativa cronológica ou lógica dos processos de campo. \n> \n> * **Ferramentas e Softwares:** Especifique os métodos de coleta e o uso de sistemas de informação geográfica ou análise estatística (como mapeamentos via QGIS, roteiros de campo ou scripts de análise de dados desenvolvidos em ambiente R).\n\n## Resultados e Discussões\n> **Diretriz de Preenchimento:** Apresentação rigorosa e objetiva dos dados coletados e processados. Conduza argumentações estritamente técnicas, comparando os padrões observados com a literatura científica pertinente e fontes taxonômicas ou ecológicas oficiais. Se necessário, organize os dados em tabelas estruturadas ou listas limpas.\n\n## Conclusão\n> **Diretriz de Preenchimento:** Apresente as considerações finais amarradas diretamente aos objetivos propostos na Introdução. Enumere de forma clara e concisa quais são as próximas etapas sugeridas, encaminhamentos técnicos ou recomendações práticas decorrentes deste relatório.\n`,
+            relat_tecnico_em_v: `**[NOME DA INSTITUIÇÃO EM LETRAS MAIÚSCULAS]** *[Curso ou Setor de Atuação]* **Orientador:** [Nome do Professor / Orientador]  \n**Autor:** [Nome do Autor do Relatório]  \n\n# [TÍTULO DO RELATÓRIO EM LETRAS MAIÚSCULAS - MANCHETE DO FATO TÉCNICO]\n\n> **Instrução do Lead:** Escreva o parágrafo abaixo substituindo as lacunas colchetes de forma direta, mantendo a estrutura formal.\nDurante a investigação técnica, [O quê? Fato principal em estrutura SVO], fato constatado [Quem? Agentes/Equipe], [Quando? Data/Momento], [Onde? Localização exata]. A verificação ocorreu [Como? Modo de constatação e instrumentos], processo estruturado [Por quê? Causa provável ou motivo].\n\n## [Subtítulo 1: Primeira Quebra de Bloco - Evidências Principais]\n*[Orientações: Apresente as principais métricas e dados de campo. Foque na descrição exata do fenômeno ou do processo observado, eliminando qualquer tipo de adjetivação ou viés subjetivo.]*\n\n[Insira o texto do Bloco 1 aqui]\n\n## [Subtítulo 2: Segunda Quebra de Bloco - Fatores de Suporte e Histórico]\n*[Orientações: Apresente dados secundários, correlações, análises comparativas com inventários anteriores ou parâmetros de referência da literatura técnica.]*\n\n[Insira o texto do Bloco 2 aqui]\n\n### Informações Adicionais\n*[Orientações: Espaço reservado para o fechamento. Detalhe as ferramentas utilizadas para o processamento de dados, rastreamento ou softwares específicos, além de considerações marginais para auditorias ou relatórios futuros.]*\n\n[Insira o fechamento técnico aqui]\n`,
+            relat_visita_tecnica: `# RELATÓRIO DE VISITA TÉCNICA\n\n**Instituição/Curso:** [Instituição/Curso]  \n**Autor(es):** [Autor(es)]  \n**Vínculo Acadêmico:** Disciplina: [Insira o Nome da Disciplina] | Professor: [Nome do Professor]  \n**Local e Data:** [Ex: Reserva Extrativista Marinha Mãe Grande (Curuçá - PA), DD de Mês de YYYY]  \n\n---\n\n> 📌 **Diretriz de Escrita Técnica:** Este relatório deve ser extenso em dados práticos, mantendo a estrutura enxuta e focada na atividade de campo. Escreva utilizando a estrutura frasal direta (**Sujeito + Verbo + Objeto**) e mantenha a **neutralidade absoluta**, eliminando termos subjetivos ou achismos.\n\n---\n\n### 1. INTRODUÇÃO\n\n*Orientações de preenchimento:*\n* *Mencione compulsoriamente: o local da visita (e município), o objetivo geral da atividade e a contextualização com a disciplina/professor.*\n* *Padrão Frasal Técnico: "A visita técnica foi realizada no local X, situado em Y, com o objetivo geral de..." (Evite o uso de "Nós visitamos").*\n\n**Desenvolvimento:**\n[Escreva a sua introdução técnica aqui]\n\n---\n\n### 2. OBJETIVOS DA ATIVIDADE DE PESQUISA\n\n*Orientações de preenchimento:*\n* *Diferencie do objetivo geral: liste aqui as metas técnicas de cada subetapa ou procedimento da atividade de campo.*\n* *Padrão Frasal Técnico: Inicie cada item com um verbo de ação no infinitivo (ex: Identificar, Mensurar, Mapear).*\n\n**Desenvolvimento:**\n* **Etapa 1 (Reconhecimento):** [Verbo no infinitivo]...\n* **Etapa 2 (Mensuração/Amostragem):** [Verbo no infinitivo]...\n* **Etapa 3 (Coleta de Variáveis):** [Verbo no infinitivo]...\n\n---\n\n### 3. DESCRIÇÃO DO PROCESSO E ASPECTOS OBSERVADOS\n\n*Orientações de preenchimento:*\n* *Detalhe a ordem cronológica e operacional das atividades de campo.*\n* *Exponha quais aspectos/variáveis foram observados para gerar a coleta de dados e quais resultados operacionais eram esperados.*\n* *Padrão Frasal Técnico: Seja factual e preciso. Substitua "A caminhada foi difícil no mangue" por "O deslocamento seguiu o sentido do gradiente de maré, enfrentando solo lodoso de consistência inconsolidada".*\n\n**Desenvolvimento:**\n[Escreva a descrição do processo e a metodologia de campo aqui]\n\n---\n\n### 4. INTERPRETAÇÃO DOS DADOS\n\n*Orientações de preenchimento:*\n* *Apresente os resultados obtidos (numéricos, taxonômicos, estruturais) e faça a discussão analítica comparando-os com a literatura e a teoria da disciplina.*\n* *Padrão Frasal Técnico: "A análise dos dados denota que a estrutura diamétrica apresenta comportamento de J-invertido, corroborando a teoria de..." (Elimine frases como "A gente achou que os dados deram bons").*\n\n**Desenvolvimento:**\n[Escreva a análise de dados e discussões teóricas aqui]\n\n---\n\n### 5. COMENTÁRIOS FINAIS\n\n*Orientações de preenchimento:*\n* *Feche o documento atestando se os objetivos estipulados foram devidamente cumpridos.*\n* *Exponha as considerações e recomendações técnicas finais resultantes da experiência prática.*\n* *Padrão Frasal Técnico: "Conclui-se que a atividade prática cumpriu as metas propostas, evidenciando a viabilidade do método aplicado para a dinâmica florestal da região".*\n\n**Desenvolvimento:**\n[Escreva as conclusões e considerações finais aqui]\n\n---\n*Relatório gerado em: [Insira Data e Hora]*\n`,
+            relat_visita_tecnica_v2: `# Relatório de Visita Técnica\n\n## Identificação Formal\n* **Instituição/Curso:** [Instituição/Curso]\n* **Autor(es):** [Autor(es)]\n* **Vínculo Acadêmico:** Disciplina: \`[Nome da Disciplina]\` | Professor: [Nome do Professor]\n* **Local e Data:** \`[Ex: Reserva Extrativista Marinha Mãe Grande (Curuçá - PA), DD de mês de YYYY]\`\n\n---\n\n> **Diretrizes Críticas de Redação Técnica:**\n> * **Foco Prático:** Mantenha a estrutura enxuta, priorizando a exposição densa de dados coletados em campo.\n> * **Ordem Direta:** Construa as sentenças preferencialmente na ordem *Sujeito-Verbo-Objeto* para evitar ambiguidades e truncamentos na leitura.\n> * **Neutralidade e Objetividade:** Elimine qualquer teor subjetivo, adjetivações emotivas ou impressões pessoais não mensuráveis. Substitua pareceres qualitativos vagos por fatos concretos e dados numéricos precisos.\n\n---\n\n### 1. Introdução\n*Substitua este bloco de orientações pelo seu texto.*\n\n**Orientações obrigatórias para preenchimento:**\n* Apresentar o **local exato da visita** técnico-científica e sua respectiva localização geográfica.\n* Expor com clareza o **objetivo geral** da atividade de campo.\n* Contextualizar o marco acadêmico da saída, explicitando o **vínculo com a disciplina** técnica e o **professor responsável**.\n\n\`\`\`text\nInsira o texto da introdução aqui (mantenha o foco em ordem direta e impessoalidade).\n\n\`\`\`\n### 2. Objetivos da Atividade de Pesquisa\n*Substitua este bloco de orientações pelo detalhamento das etapas.*\n**Orientações obrigatórias para preenchimento:**\n * Diferencie este campo do objetivo geral citado na introdução.\n * Enumere os objetivos específicos atrelados de forma direta a **cada etapa sequencial** desenvolvida na área avaliada.\n * **Etapa 1 (Reconhecimento/Instalação):** [Objetivo da atividade executada nesta fase]\n * **Etapa 2 (Coleta de Dados/Mensuração):** [Objetivo da atividade executada nesta fase]\n * **Etapa 3 (Processamento/Fechamento):** [Objetivo da atividade executada nesta fase]\n### 3. Descrição do Processo e Aspectos Observados\n*Substitua este bloco de orientações pelo seu texto.*\n**Orientações obrigatórias para preenchimento:**\n * Descrever detalhadamente a execução cronológica das atividades em campo (**passo a passo prático**).\n * Apontar com rigor quais **aspectos e variáveis técnico-ambientais foram observados** para subsidiar a posterior amostragem.\n * Declarar quais eram os **resultados e metas pretendidos** através da aplicação de tais parâmetros de observação.\n\`\`\`text\nInsira a descrição processual aqui. Utilize verbos que indiquem ações concretas e dados métricos.\n\n\`\`\`\n### 4. Interpretação dos Dados Coletados\n*Substitua este bloco de orientações pelo seu texto.*\n**Orientações obrigatórias para preenchimento:**\n * Apresentar os dados brutos ou sumarizados extraídos durante a permanência em campo (tabelas, listagens taxonômicas ou métricas estruturais).\n * Desenvolver a análise interpretativa cruzando esses dados com a **fundamentação teórica** consolidada na literatura científica da disciplina.\n\`\`\`text\nInsira a análise e interpretação dos dados aqui (utilize terminologia técnica precisa).\n\n\`\`\`\n### 5. Comentários Finais\n*Substitua este bloco de orientações pelo seu texto.*\n**Orientações obrigatórias para preenchimento:**\n * Efetuar a síntese conclusiva do documento avaliando formalmente se os **objetivos propostos foram integralmente cumpridos**.\n * Registrar as considerações técnicas finais sobre as contribuições práticas e limitações operacionais diagnosticadas na atividade.\n\`\`\`text\nInsira as conclusões e encerramento técnico aqui.\n\n\`\`\`\n*Relatório estruturado com base nas diretrizes do referencial técnico em [Inserir Data Atual].*\n`,
+            relat_palestra: `# RELATÓRIO DE PALESTRA / EVENTO\n\n## 1. Identificação\n* **Nome do Aluno:** [Insira seu nome completo]\n* **Instituição / Curso:** [Ex: Engenharia Florestal - UEPA]\n* **Turma / Período:** [Ex: 8º Semestre]\n* **Tema da Palestra / Evento:** [Insira o título exato do evento ou palestra]\n* **Palestrante(s):** [Nome completo do(s) ministrante(s) e sua titulação]\n* **Disciplina(s) / Professor(es) Envolvido(s):** [Ex: Nome do Professor]\n* **Data:** [DD/MM/AAAA] | **Local:** [Ex: Auditório Central, Campus Castanhal]\n* **Horário:** [00:00] às [00:00]\n\n---\n\n## 2. Conteúdo Textual\n\n### Introdução\n> **Diretrizes de Preenchimento:** Redija de forma estritamente impessoal e objetiva. Informe qual evento está sendo relatado, onde e quando ocorreu, quem foram os realizadores/envolvidos e qual era o objetivo principal da atividade. Priorize ordens diretas de frase para garantir clareza imediata.\n> *Sugestão de abertura:* "O presente documento relata as atividades desenvolvidas na palestra técnica..."\n\n[Insira seu texto de Introdução aqui]\n\n### Desenvolvimento\n> **Diretrizes de Preenchimento:** Descreva o núcleo técnico do evento. Sintetize as ideias centrais, os dados apresentados, as metodologias explicadas pelo palestrante e os pontos de maior relevância prática ou científica. Mantenha o foco na precisão conceitual da área e evite juízos de valor durante a descrição factual.\n> *Sugestão de abertura:* "A abordagem do tema pautou-se nos seguintes pontos fundamentais: primeiramente, discutiu-se..."\n\n[Insira seu texto de Desenvolvimento aqui]\n\n### Conclusão (Avaliação)\n> **Diretrizes de Preenchimento:** Apresente uma análise técnica e crítica do evento. Pontue se as metas foram alcançadas, a qualidade da organização estrutural e a contribuição do aprendizado para o cenário acadêmico/profissional. Substitua impressões subjetivas por constatações analíticas fundamentadas no que foi exposto.\n> *Sugestão de abertura:* "Em suma, constata-se que o evento cumpriu satisfatoriamente o seu papel, visto que..."\n\n[Insira seu texto de Conclusão aqui]\n\n---\n\n## 3. Validação\n\n________________________________________________  \n**Assinatura do Acadêmico**\n\n________________________________________________  \n**Assinatura do Responsável**\n`,
+            relat_experiencia_lab: `# [Título do Trabalho]\n\n**Autor(es):** [Autor(es)]  \n**Data:** [DD/MM/AAAA]  \n**Disciplina:** [Ex: Nome da Disciplina - Instituição]  \n\n---\n\n## Introdução\n\n> **O que preencher:** O que foi relatado? Por quê (justificativa)? Para quê (objetivos)? Identifique também a base teórica utilizada.\n> **Refinamento Técnico:** Utilize a ordem direta (Sujeito-Verbo-Objeto) para garantir assertividade. Vá direto ao ponto.\n\n[Substitua este texto pela sua introdução]\n\n## Materiais e Métodos\n\n> **O que preencher:** Como foi feito? Esclareça os procedimentos, coleta de dados e materiais utilizados. Detalhe para garantir a reprodutibilidade.\n> **Refinamento Técnico:** Elimine qualquer traço de subjetividade. Descreva os passos de forma impessoal e sequencial, focando no objeto da pesquisa (ex: o software QGIS, a fita diamétrica, as amostras da família *Fabaceae*).\n\n[Substitua este texto pelos seus métodos]\n\n## Resultados e Discussão\n\n> **O que preencher:** O que foi encontrado? Discuta os resultados frente ao objetivo e evidencie os conhecimentos adquiridos com maturidade.\n> **Refinamento Técnico:** A clareza é fundamental aqui. Apresente os números ou fatos isoladamente primeiro e, no parágrafo seguinte, confronte-os com a literatura especializada (citando as fontes).\n\n[Substitua este texto pelos seus resultados]\n\n## Referências\n\n> **O que preencher:** Obras consultadas em **ordem alfabética**.\n\n- SOBRENOME, Nome. *Título da obra*. Local: Editora, Ano.\n- SOBRENOME, Nome. *Título da obra*. Local: Editora, Ano.\n`,
+            relat_experiencia_lab_8: `# [INSERIR TÍTULO DO TRABALHO - Ex: Prática de Extração de DNA ou Mensuração Florestal]\n\n**Autor(es):** [Autor(es)]\n**Data:** [DD/MM/AAAA]\n**Disciplina:** [Ex: Inventário Florestal, Dendrometria - Instituição]\n\n---\n\n## Introdução\n> **Guia Prático:** O que foi relatado? Por quê (justificativa)? Para quê (objetivos)? Qual a base teórica?\n> **Refinamento Técnico:** Escreva de forma impessoal e direta. O último parágrafo deve, obrigatoriamente, declarar o objetivo geral da prática.\n\n[O presente relatório tem como objetivo...]\n\n## Esquema de Investigação / Materiais e Métodos\n> **Guia Prático:** Como foi feito? Detalhe os procedimentos, instrumentos e coletas para garantir a reprodutibilidade.\n> **Refinamento Técnico:** Estruture o texto em *Sujeito-Verbo-Objeto*. Elimine adjetivos e julgamentos de valor. Foque na precisão do fluxo operacional e nas especificações das ferramentas utilizadas.\n\n[Foram utilizados os seguintes equipamentos... O procedimento consistiu em...]\n\n## Resultados e Discussão\n> **Guia Prático:** O que foi encontrado? Discuta os achados frente ao objetivo inicial e à literatura teórica.\n> **Refinamento Técnico:** Separe a evidência factual da interpretação. Primeiro, exponha a métrica/dado obtido; em seguida, justifique o fenômeno cientificamente. Abandone qualquer traço de subjetividade.\n\n[Os dados obtidos demonstraram que... Ao analisar os resultados em face da teoria...]\n\n## Referências\n> **Guia Prático:** Liste as obras consultadas em ordem alfabética pelo sobrenome do autor.\n\n* SOBRENOME, Nome. *Título da obra*. Local: Editora, Ano.\n`,
+            relat_pesquisa_cientifica: `# RELATÓRIO DE PESQUISA CIENTÍFICA\n\n## 1. IDENTIFICAÇÃO DO TRABALHO E DA AUTORIA\n- **Instituição:** [Universidade do Estado do Pará - UEPA, Campus Castanhal]\n- **Curso/Ano:** [Engenharia Florestal, 2026]\n- **Autor:** [Nome do Autor]\n- **Título:** [Insira o título. Deve ser claro, conciso e refletir os resultados obtidos na pesquisa]\n- **Orientador:** [Nome do Orientador]\n- **Área:** [Engenharia Florestal]\n\n## 2. PARTE TEXTUAL\n\n> **Critérios Norteadores de Ada M. M. Brasileiro:**\n> - *Reprodutibilidade:* Quem ler conseguirá entender o que foi feito e como?\n> - *Forma:* Linguagem concisa, frases completas e raciocínio lógico claro.\n\n### INTRODUÇÃO (TEMA E PROBLEMA)\n*[Apresente o assunto pesquisado acompanhado de uma breve contextualização prática/teórica e a delimitação clara do problema investigado.]*\n> **Dica de Escrita:** Utilize a ordem direta (Sujeito-Verbo-Objeto). Evite construções passivas complexas e adjetivos supérfluos. Vá direto ao ponto.\n\n### JUSTIFICATIVA\n*[Demonstre de forma clara os motivos (pessoais, acadêmicos, científicos ou sociais) que tornaram a realização desta pesquisa indispensável.]*\n\n### OBJETIVOS DO TRABALHO\n**Geral:**\n- [Verbo no infinitivo + Ação central]\n\n**Específicos:**\n- [Verbo no infinitivo + Etapa 1]\n- [Verbo no infinitivo + Etapa 2]\n> **Nota:** Use verbos como *Caracterizar, Analisar, Quantificar, Mensurar, Identificar*.\n\n### METODOLOGIA EXECUTADA\n*[Foco na Reprodutibilidade: Detalhe minuciosamente os procedimentos reais seguidos no percurso (fins, meios, abordagem, universo, amostra, ferramentas de coleta e métodos de análise estatística/espacial).]*\n> **Dica de Escrita:** Cite versões de softwares (QGIS, R, Avenza Maps, iNaturalist) e métodos de campo padronizados. Elimine a subjetividade: relate "A equipe instalou parcelas..." em vez de "Nós achamos melhor instalar...".\n\n### RESULTADOS E DISCUSSÃO\n*[Apresente os dados obtidos de forma objetiva. Use referências a tabelas, quadros ou gráficos se necessário para reduzir a extensão do texto mantendo a clareza. Discuta os achados à luz da literatura científica.]*\n\n### CONCLUSÕES / CONSIDERAÇÕES FINAIS\n*[Sintetize as respostas encontradas para o problema de pesquisa, as limitações do estudo e as contribuições finais do relatório para a área florestal.]*\n\n## 3. PARTE PÓS-TEXTUAL\n\n### REFERÊNCIAS BIBLIOGRÁFICAS (ABNT NBR 6023)\n*[Liste todas as obras, manuais e artigos citados no relatório.]*\n> **Regra estrita:** Siga rigorosamente as normas da ABNT NBR 6023 (2018). Inclua no mínimo 3 autores/livros base. Utilize seu gerenciador bibliográfico (ex: Zotero) para automatizar e garantir a precisão da norma.\n\n---\n*Relatório estruturado sob as diretrizes de [Autores de referência], "Letramento acadêmico: prática de pesquisa e produção textual na universidade" [Editora], [Ano].*\n`,
+            relat_plano_pesquisa: `# PLANO DE PESQUISA\n\n## 1. PARTE PRÉ-TEXTUAL (IDENTIFICAÇÃO)\n\n> [!info] Instrução\n> Serve exclusivamente para a identificação do trabalho e da autoria.\n\n- **Instituição:** [Universidade do Estado do Pará - UEPA, Campus Castanhal]\n- **Curso/Ano:** [Engenharia Florestal, 2026]\n- **Autor:** [Seu Nome]\n- **Título:** [Título Provisório]\n- **Orientador:** [Prof. Dr. Nome]\n- **Área:** [Engenharia Florestal]\n\n---\n\n## 2. PARTE TEXTUAL\n\n### TEMA E CONTEXTUALIZAÇÃO\n> [!tip] Diretriz\n> O assunto a que a pesquisa se refere acompanhado de uma breve contextualização.\n> **Rigor Técnico:** Construa os parágrafos em ordem direta (Sujeito-Verbo-Objeto). Evite viés interpretativo ou adjetivação excessiva; restrinja-se aos dados e ao contexto técnico.\n\n[Seu texto aqui]\n\n### DELIMITAÇÃO DO TEMA / PROBLEMA\n> [!tip] Diretriz\n> Apenas UMA frase (interrogativa ou afirmativa) que sintetize exatamente o que será investigado. Situação a ser compreendida (viável no tempo/espaço).\n\n[Sua pergunta aqui]\n\n### JUSTIFICATIVA\n> [!tip] Diretriz\n> Responde "Por quê?" (convencer sobre a relevância). Redigir em tópicos.\n> **Rigor Técnico:** Elimine qualquer subjetividade. Argumente com base em necessidades mensuráveis (ex: preencher lacuna da literatura, gerar dados para planos de manejo).\n\n- **Motivo Acadêmico/Científico:** [Seu texto]\n- **Motivo Social/Profissional:** [Seu texto]\n\n### OBJETIVOS\n> [!tip] Diretriz\n> Responde "Para quê?". Usar frases curtas e verbos no infinitivo (investigar, caracterizar, propor).\n\n**Geral:**\n- [Objetivo central]\n\n**Específicos:**\n- [Etapa 1]\n- [Etapa 2]\n- [Etapa 3]\n\n### HIPÓTESE\n> [!tip] Diretriz\n> Parágrafo dissertativo com a provável resposta. Afirmação direta baseada em literatura.\n\n[Seu texto aqui]\n\n### REFERENCIAL TEÓRICO\n> [!tip] Diretriz\n> Apresentação conceitual superficial dos autores que sustentarão o campo teórico.\n\n[Seu texto aqui]\n\n### METODOLOGIA\n> [!tip] Diretriz\n> Detalhamento prático. Utilize formato de lista para facilitar a leitura técnica.\n\n- **Raciocínio:** [ex: Dedutivo]\n- **Abordagem:** [ex: Quantitativa / Qualitativa]\n- **Universo/Amostra:** [ex: 5 parcelas de 10x10m]\n- **Instrumentos de coleta:** [ex: Fita diamétrica, GPS]\n- **Tratamento de dados:** [ex: Análise estatística no software R, mapeamento no QGIS]\n- **Aspectos Éticos:** [Detalhes de licenças, se aplicável]\n\n### CRONOGRAMA\n> [!tip] Diretriz\n> Lista sequencial de atividades associadas ao prazo, sem utilizar tabelas.\n\n- Levantamento bibliográfico - [Mês/Ano]\n- Pesquisa de campo - [Mês/Ano]\n- Processamento e análise de dados - [Mês/Ano]\n- Redação e revisão - [Mês/Ano]\n\n---\n\n## 3. PARTE PÓS-TEXTUAL\n\n### REFERÊNCIAS BIBLIOGRÁFICAS\n> [!warning] ABNT NBR 6023 (2018)\n> Mínimo de três livros/autores mapeados. Recomenda-se gerar a formatação final via Zotero.\n\n[SOBRENOME, Nome. Título do documento. Local: Editora, Ano.]\n`,
+            relat_portifolio_aula: `**UNIVERSIDADE DO ESTADO DO PARÁ – CAMPUS UNIVERSITÁRIO DE CASTANHAL**\n*Engenharia Florestal – 8º Período*\n\n**Disciplina:** [Nome da Disciplina] | **Professor(a):** [Nome do Professor]\n\n**Objeto de observação:** [Ex: Coleta e identificação de espécies de mangue]\n\n**Período/Data:** [Turno - DD/MM/AAAA] | **Graduando:** [Nome do Autor]\n\n---\n\n### Tema amplo da aula\n> _Instrução: Qual foi o assunto principal abordado pelo professor neste dia? Utilize linguagem direta e objetiva._\n[Insira o texto aqui]\n\n### Tópicos específicos trabalhados\n> _Instrução: Liste os subtópicos e conceitos técnicos discutidos._\n- [Tópico 1]\n- [Tópico 2]\n- [Tópico 3]\n\n### Estratégias didáticas\n> _Instrução: Como o professor conduziu a aula? (Apresentação de slides, ida ao laboratório, saída de campo em reserva, debate, etc.)_\n[Insira o texto aqui]\n\n### Minhas percepções sobre a aula\n> _Instrução: Este é o coração do portfólio. Foque em como aplicar o conhecimento na Engenharia Florestal e em sua análise crítica do método. Destaque dificuldades, facilidades e aprendizados. Mantenha o equilíbrio entre a reflexão pessoal e o rigor da escrita técnica._\n[Insira o texto aqui]\n\n### Material utilizado e produzido\n> _Instrução: Liste anexos, apêndices e recursos. Inclua registros do Avenza Maps/QGIS, dados exportados, fotografias botânicas e literatura científica a ser inserida no Zotero._\n[Insira o texto aqui]\n`,
+            relat_fichamentos: `---\ntags: [fichamento, engenharia-florestal, leitura]\ndata_leitura: YYYY-MM-DD\n---\n\n# Fichamento: [Inserir Tema Geral ou Título Curto]\n\n**Instituição:** Universidade do Estado do Pará (UEPA)\n**Disciplina:** [Nome da Disciplina]\n**Elaborado por:** [Nome do Autor]\n\n## Referência Bibliográfica\n[SOBRENOME, Nome]. **[Título do Trabalho]**. [Cidade]: [Revista ou Editora], [Ano].\n\n## Metadados\n* **Tema Geral:** [Macroárea]\n* **Tema Específico:** [Objeto exato de estudo]\n\n---\n\n## Corpo do Fichamento\n\n> **Aviso de Preenchimento:** Escolha o tipo de fichamento (Resumo, Citações ou Analítico) estruturando o conteúdo conforme as diretrizes abaixo. Apague os blocos que não utilizar.\n\n### Tipo: Resumo\n[Insira o texto aqui. Regras de redação técnica:\n1. Privilegie a ordem direta (Sujeito-Verbo-Objeto).\n2. Elimine qualquer juízo de valor ou interpretação pessoal.\n3. Descreva o escopo, a metodologia e a conclusão da obra com exatidão terminológica.]\n\n### Tipo: Citações\n> "[Transcreva o trecho literal original. Utilize reticências entre colchetes [...] para supressões.]" (p. [XX])\n\n> "[Transcreva o trecho literal original.]" (p. [XX])\n\n### Tipo: Analítico\n\n**Ideia do Autor:**\n[Sintetize a premissa, metodologia ou constatação do autor. Mantenha a descrição estritamente factual e ancorada no texto original.]\n\n**Comentário Analítico:**\n[Redija sua avaliação técnica. \n* Diretriz 1: Avalie o rigor do texto, correlacionando-o com outros dados da literatura.\n* Diretriz 2: Mantenha a impessoalidade. Substitua impressões (ex: "o texto é bom porque explica bem") por constatações objetivas (ex: "a estruturação metodológica permite a replicação do inventário").]\n`,
+            relat_fichamento_unificado: `---\ntags: [fichamento, engenharia-florestal, artigo]\ndata_leitura: YYYY-MM-DD\n---\n\n# Fichamento: [Inserir Tema Geral ou Título Curto]\n\n**Instituição:** Universidade do Estado do Pará (UEPA)\n**Disciplina:** [Nome da Disciplina]\n**Elaborado por:** [Nome do Autor]\n\n## Referência Bibliográfica\n[SOBRENOME, Nome do Autor]. **[Título do Artigo ou Livro]**. [Cidade]: [Nome da Revista ou Editora], [Ano].\n\n## Metadados do Estudo\n* **Tema Geral:** [Identifique a macroárea do texto. Ex: Taxonomia Botânica]\n* **Tema Específico:** [Identifique o objeto exato do estudo. Ex: Identificação de espécies arbóreas em reservas extrativistas]\n\n---\n\n## 1. Síntese de Conteúdo (Resumo)\n[Redija um resumo objetivo do texto. Estruture as frases em sujeito-verbo-objeto. Identifique o problema de pesquisa, descreva os métodos utilizados pelo autor e liste os principais resultados obtidos. Mantenha o distanciamento técnico e evite qualquer adjetivação.]\n\n## 2. Ideia Central do Autor\n[Isole o argumento principal ou a tese defendida pelo autor. Qual é a premissa fundamental que sustenta o artigo?]\n\n## 3. Citações Chave\n> "[Transcreva o trecho literal do texto original que contém definições conceituais ou dados cruciais. Utilize reticências entre colchetes [...] para indicar cortes textuais.]" (p. [XX])\n\n> "[Insira outra citação relevante que embase futuras redações técnicas.]" (p. [XX])\n\n## 4. Comentário Analítico\n[Insira sua avaliação técnica e crítica sobre o estudo lido. Avalie o rigor do método aplicado, a coerência estrutural do artigo e a validade das conclusões. Registre também como as informações levantadas se conectam ou agregam valor aos seus levantamentos de campo atuais.]\n`,
+            relat_resenhas: `---\ntags: [resenha, engenharia-florestal, leitura-academica]\ndata: YYYY-MM-DD\n---\n\nSOBRENOME, Nome. **Título da Obra**. Cidade: Revista/Editora, Ano.\n\n<center>**RESENHA [CRÍTICA / DESCRITIVA]**</center>\n\n<div align="right">[Nome do Autor]¹</div>\n\n### Introdução\n> **Guia:** Contextualize a obra, o autor original e o escopo.\n> **Diretriz Técnica:** Estrutura S-V-O. Seja direto ao apresentar os objetivos da obra fonte.\n> **Ponto de partida:** Uma análise [crítica/descritiva] é o que se apresenta a seguir, cujo texto-fonte foi "[Obra]", de autoria de [Autor]. Oportunamente, nesta obra, o autor traz à tona o assunto [Assunto] com o objetivo de [Objetivo].\n\n[Escreva sua introdução aqui]\n\n### Desenvolvimento\n> **Guia:** Sintetize o tema, delimitação, justificativa, metodologia utilizada e os resultados obtidos.\n> **Diretriz Técnica:** Foco em dados concretos. Evite julgamentos nesta seção; o objetivo aqui é expor a anatomia do trabalho lido (métodos, amostragens, software utilizado, bioma estudado).\n\n[Escreva seu desenvolvimento aqui]\n\n### Análise Crítica\n> *(Nota: Exclua este bloco se a resenha for estritamente descritiva)*\n> **Guia:** O autor alcançou os objetivos? Qual a originalidade? Quais as falhas ou limitações?\n> **Diretriz Técnica:** Impessoalidade. A crítica deve recair sobre a robustez do método ou a validade das conclusões, baseando-se em fatos da literatura florestal, e não em opiniões subjetivas.\n\n[Escreva sua análise crítica aqui]\n\n### Referências Complementares\n> **Guia:** Liste em ABNT os autores que você usou para fundamentar sua Análise Crítica.\n\n- REFERÊNCIA 1\n- REFERÊNCIA 2\n\n---\n¹ Acadêmico do 8º período de Engenharia Florestal da Universidade do Estado do Pará (UEPA), Campus Castanhal.\n`,
+            relat_resenha_unico: `---\ntags: [resenha, {crítica_ou_descritiva}, engenharia-florestal, leitura-academica]\ndata: YYYY-MM-DD\n---\n\nSOBRENOME, Nome. **Título da Obra**. Cidade: Revista/Editora, Ano.\n\n<center>**RESENHA {CRÍTICA / DESCRITIVA}**</center>\n\n<div align="right">[Nome do Autor]¹</div>\n\n### 1. Introdução\n> **Guia:** Contextualize a obra, o autor original e o escopo. \n> **Diretriz Técnica:** Estrutura direta (S-V-O). Seja objetivo ao apresentar a meta da obra fonte.\n> **Snippet:** Uma análise {crítica / descritiva} é o que se apresenta a seguir, cujo texto-fonte foi "[Obra]", de autoria de [Autor]. Oportunamente, nesta obra, o autor traz à tona o assunto [Assunto] com o objetivo de [Objetivo].\n\n[Escreva sua introdução aqui]\n\n### 2. Desenvolvimento (Síntese)\n> **Guia:** Sintetize o tema, a delimitação, a justificativa, a metodologia utilizada e os resultados obtidos.\n> **Diretriz Técnica:** Foco estrito em dados concretos (métodos, amostragens, ferramentas, bioma). Não emita julgamentos de valor nesta seção.\n\n[Escreva seu desenvolvimento aqui]\n\n### 3. Fechamento (Conclusão / Análise)\n> **Guia Dinâmico (Escolha de acordo com o tipo da resenha):**\n> - **SE DESCRITIVA:** Apenas exponha a conclusão final *do autor original*. Como a pesquisa se encerrou segundo ele? (Sem emitir sua opinião).\n> - **SE CRÍTICA:** Avalie se o autor alcançou os objetivos. Aponte a relevância, a originalidade ou as limitações do estudo. \n> **Diretriz Técnica (Para Crítica):** Mantenha a impessoalidade técnica. Fundamente suas críticas em literatura e na validade dos métodos (ex: "Os dados levantados não suportam a conclusão X devido ao tamanho da amostragem"), evitando marcações subjetivas.\n\n[Escreva seu fechamento aqui]\n\n### 4. Referências Complementares\n> **Guia:** Liste em ABNT os autores externos utilizados para fundamentar seu texto (se houver).\n\n- [Referência 1]\n- [Referência 2]\n\n---\n¹ Acadêmico do 8º período de Engenharia Florestal da Universidade do Estado do Pará (UEPA), Campus Castanhal.\n`,
+            relat_resumos: `# [Título do Relatório ou Projeto]\n\n**Autor:** [Nome do Autor]  \n**Instituição:** Universidade do Estado do Pará (UEPA) - Engenharia Florestal  \n**Orientador:** [Nome do Orientador]  \n**Data:** [[YYYY-MM-DD]]  \n**Referência Base:** [Inserir a citação da obra se for revisão, ou deixar em branco]\n\n---\n\n## 1. Introdução\n> **Meta:** Contextualizar o cenário, apresentar o problema, a justificativa e os objetivos de forma direta (sujeito-verbo-objeto). Sem divagações subjetivas.\n\n*Escreva o conteúdo aqui...*\n\n## 2. Metodologia\n> **Meta:** Como foi feito. Descreva os métodos de coleta, ferramentas geoprocessuais e softwares analíticos empregados.  \n> **Atenção:** Mantenha a voz ativa e a 3ª pessoa do singular ("A pesquisa utilizou...", "O método baseou-se em..."). O distanciamento científico é crucial na Engenharia Florestal.\n\n*Escreva o conteúdo aqui...*\n\n## 3. Resultados e Discussão\n> **Meta:** O que foi encontrado e o que isso significa. Apresente os dados brutos ou processados de forma limpa.  \n> **Atenção:** Se relatar dados de campo sobre morfologia e ecologia, mantenha a precisão técnica. Evite adjetivos de valor; prefira medições exatas e descrições anatômicas formais.\n\n*Escreva o conteúdo aqui...*\n\n## 4. Considerações Finais\n> **Meta:** Fechar o ciclo. Responda diretamente ao objetivo proposto na introdução usando os resultados obtidos. Não adicione bibliografia ou dados novos nesta etapa.\n\n*Escreva o conteúdo aqui...*\n\n---\n**Palavras-chave:** \`#engenharia-florestal\` \`#metodologia\` \`[tag_adicional]\`\n`,
+            relat_resumo_modular: `# [Título da Obra, Artigo ou Relatório]\n\n**Metadados:**\n* **Autoria:** [Nome do Autor]\n* **Referência Base:** [Cole aqui a citação padrão ABNT gerada pelo Zotero ou equivalente]\n* **Data da Leitura/Produção:** [[YYYY-MM-DD]]\n\n---\n\n## 1. Eixo Introdutório (Tema, Justificativa e Objetivos)\n> **Aplica-se a:** TODOS os modelos (exceto Descritivo puro).\n> **Diretriz:** Vá direto ao ponto utilizando a estrutura sujeito-verbo-objeto. Apresente a realidade empírica, o problema abordado e os objetivos do autor/pesquisa.\n\n*Escreva o texto aqui...*\n\n## 2. Eixo de Desenvolvimento (Escolha A ou B)\n> **Diretriz:** Se for um relato de pesquisa prática, vá de "A". Se for análise de texto/livro de terceiros, vá de "B".\n\n* **[OPÇÃO A] Metodologia (Informativo, Homotópico, Expandido):** *Descreva os métodos, softwares e variáveis ambientais analisadas. Mantenha a voz ativa e a 3ª pessoa.*\n* **[OPÇÃO B] Síntese da Obra (Crítico, Descritivo):** *Descreva as ideias centrais do autor. (Se for um resumo puramente descritivo, transforme este bloco em uma lista de tópicos do sumário).*\n\n*Escreva o texto aqui...*\n\n## 3. Eixo de Desfecho (Escolha A ou B)\n> **Diretriz:** Resultados pertencem à pesquisa; avaliação pertence à resenha. Nunca misture os dois.\n\n* **[OPÇÃO A] Resultados e Conclusão (Informativo, Homotópico, Expandido):**\n  *Apresente os dados obtidos e avalie a hipótese inicial. Deixe os dados falarem por si, sem adjetivações.*\n* **[OPÇÃO B] Avaliação Crítica (Apenas Resumo Crítico):**\n  *Avalie a importância da obra, a validade da metodologia usada pelo autor e o alcance dos objetivos. NÃO faça citações diretas aqui.*\n\n*Escreva o texto aqui...*\n\n---\n### 🛠️ CHECKLIST DE EXPORTAÇÃO (Como aglutinar este texto?)\n- [ ] **Para Homotópico / Expandido:** Junte tudo o que você escreveu acima em um **ÚNICO PARÁGRAFO**, separando as ideias apenas por pontos continuados. Oculte os títulos das seções.\n- [ ] **Para Informativo / Crítico:** Mantenha as quebras de linha e a estrutura em parágrafos distintos.\n- [ ] **Para Descritivo:** Converta tudo em tópicos (\`- \`).\n\n**Palavras-chave:** \`#tag1\` \`#tag2\` \`#tag3\`\n`,
+            ref_capitulo_abnt: `### 📘 Capítulo de Livro (ABNT — NBR 6023:2018)\n\n**Referência:**\nSOBRENOME, Nome (autor do capítulo). Título do capítulo. In: SOBRENOME, Nome (Org.). Título do livro. Cidade: Editora, Ano. p. inicial-final.\n\n**Exemplo:**\nSOUZA, Alberto. Diversidade florística em áreas de várzea. In: NEVES, Evandro Maia (org.). Ecologia de ecossistemas amazônicos. Belém: Editora UEPA, 2025. p. 45-60.\n\n**Citação no texto (NBR 10520:2023):**\n- 1 Autor: (Souza, 2025) | Segundo Souza (2025)...\n- 2 Autores: (Souza e Neves, 2025) | Para Souza e Neves (2025)...\n- 3+ Autores: (Souza et al., 2025) | De acordo com Souza et al. (2025)...\n`,
+            ref_capitulo_apa: `### 📗 Capítulo de Livro (APA — 7ª ed.)\n\n**Referência:**\nSobrenome, Iniciais. (Ano). Título do capítulo. In Iniciais. Sobrenome do organizador (Ed.), Título do livro (pp. xx-xx). Editora.\n\n**Exemplo:**\nSouza, I. (2025). Diversidade florística em áreas de várzea. In E. M. Neves (Ed.), Ecologia de ecossistemas amazônicos (pp. 45-60). Editora UEPA.\n\n**Citação no texto:**\n- 1 Autor: (Souza, 2025) | Souza (2025) afirma que...\n- 2 Autores: (Souza & Neves, 2025) | Souza e Neves (2025) afirmam que...\n- 3+ Autores: (Souza et al., 2025) | Souza et al. (2025) descrevem...\n`,
+            ref_software_abnt: `### 📘 Software (ABNT — NBR 6023:2018)\n\n**Referência:**\nSOBRENOME, Nome ou NOME DA EMPRESA. Nome do software: subtítulo. Versão. Cidade: Empresa, Ano. Disponível em: <URL>. Acesso em: data.\n\n**Exemplo:**\nR CORE TEAM. R: a language and environment for statistical computing. Versão 4.4.1. Viena: R Foundation for Statistical Computing, 2024. Disponível em: https://www.r-project.org/. Acesso em: 27 jun. 2026.\n\n**Citação no texto:**\n- Parentética: (R Core Team, 2024)\n- Narrativa: Segundo R Core Team (2024)...\n`,
+            ref_software_apa: `### 📗 Software (APA — 7ª ed.)\n\n**Referência:**\nAutor/Organização. (Ano). Nome do software (Versão) [Software]. Fabricante. URL\n\n**Exemplo:**\nR Core Team. (2024). R: A language and environment for statistical computing (Version 4.4.1) [Computer software]. R Foundation for Statistical Computing. https://www.r-project.org/\n\n**Citação no texto:**\n- Parentética: (R Core Team, 2024)\n- Narrativa: R Core Team (2024) descreve...\n`,
+            ref_bibtex_capitulo_software: `### 🔖 BibTeX — Capítulo e Software\n\n\`\`\`bibtex\n@incollection{chaveDeCitacao,\n  author = {Sobrenome, Nome},\n  title = {Título do capítulo},\n  booktitle = {Título do livro},\n  editor = {Sobrenome, Nome},\n  year = {Ano},\n  publisher = {Editora},\n  address = {Cidade},\n  pages = {45--60}\n}\n\n@software{chaveDeCitacao,\n  author = {Autor/Organização},\n  title = {Nome do software},\n  version = {Versão},\n  year = {Ano},\n  url = {URL}\n}\n\`\`\`\n`,
+            ref_artigo_abnt: `### 📘 Artigo Científico (ABNT — NBR 6023:2018)\n\n**Referência:**\nSOBRENOME, Nome dos Autores. Título do Artigo. Nome da Revista, Volume / Edição / Páginas, Ano. URL.\n\n**Exemplo:**\nSOUZA, Alberto; NEVES, Evandro Maia. Morfologia e taxonomia da família Lecythidaceae. Revista Brasileira de Engenharia Florestal, v. 10, n. 2, p. 15-30, 2026. https://doi.org/...\n\n**Citação no texto (NBR 10520:2023):**\n- 1 Autor: (Souza, 2026) | Segundo Souza (2026)...\n- 2 Autores: (Souza e Neves, 2026) | Para Souza e Neves (2026)...\n- 3+ Autores: (Souza et al., 2026) | De acordo com Souza et al. (2026)...\n`,
+            ref_artigo_apa: `### 📗 Artigo Científico (APA — 7ª ed.)\n\n**Referência:**\nSobrenome, Iniciais. (Ano). Título do Artigo. Nome da Revista, Volume(Número), Páginas. URL.\n\n**Exemplo:**\nSouza, I., & Neves, E. M. (2026). Morfologia e taxonomia da família Lecythidaceae. Revista Brasileira de Engenharia Florestal, 10(2), 15-30. https://doi.org/...\n\n**Citação no texto:**\n- 1 Autor: (Souza, 2026) | Souza (2026) afirma que...\n- 2 Autores: (Souza & Neves, 2026) | Souza e Neves (2026) afirmam que...\n- 3+ Autores: (Souza et al., 2026) | Souza et al. (2026) descrevem...\n`,
+            ref_livro_abnt: `### 📘 Livro (ABNT — NBR 6023:2018)\n\n**Referência:**\nSOBRENOME, Nome dos Autores. Título do Livro. Cidade da Publicação: Editora, Ano.\n\n**Exemplo:**\nSOUZA, Alberto. Manual de identificação de espécies da Amazônia. Belém: Editora UEPA, 2025.\n\n**Citação no texto:**\n- 1 Autor: (Souza, 2025) | Segundo Souza (2025)...\n- 2 Autores: (Souza e Neves, 2025) | Para Souza e Neves (2025)...\n- 3+ Autores: (Souza et al., 2025) | De acordo com Souza et al. (2025)...\n`,
+            ref_livro_apa: `### 📗 Livro (APA — 7ª ed.)\n\n**Referência:**\nSobrenome, Iniciais. (Ano). Título do Livro. Editora. URL/DOI se houver.\n\n**Exemplo:**\nSouza, I. (2025). Manual de identificação de espécies da Amazônia. Editora UEPA.\n\n**Citação no texto:**\n- 1 Autor: (Souza, 2025) | Souza (2025) afirma que...\n- 2 Autores: (Souza & Neves, 2025) | Souza e Neves (2025) afirmam que...\n- 3+ Autores: (Souza et al., 2025) | Souza et al. (2025) descrevem...\n`,
+            ref_site_abnt: `### 📘 Site / Notícia Online / Blog (ABNT — NBR 6023:2018)\n\n**Referência:**\nSOBRENOME, Nome ou NOME DA INSTITUIÇÃO. Título da Publicação. Nome do Site/Blog, Ano. Disponível em: <URL>. Acesso em: Data de Acesso.\n\n**Exemplo:**\nINSTITUTO CHICO MENDES. Monitoramento da Reserva Extrativista Marinha Mãe Grande. ICMBio, 2025. Disponível em: https://.... Acesso em: 27 jun. 2026.\n\n**Citação no texto:**\n- Parentética: (Instituto Chico Mendes, 2025)\n- Narrativa: Segundo o Instituto Chico Mendes (2025)...\n`,
+            ref_site_apa: `### 📗 Site / Notícia Online / Blog (APA — 7ª ed.)\n\n**Referência:**\nSobrenome, Iniciais ou Nome da Instituição. (Ano, Mês Dia). Título da Página. Nome do Site. URL.\n\n**Exemplo:**\nInstituto Chico Mendes. (2025, 10 maio). Monitoramento da Reserva Extrativista Marinha Mãe Grande. ICMBio. https://...\n\n**Citação no texto:**\n- Parentética: (Instituto Chico Mendes, 2025)\n- Narrativa: O Instituto Chico Mendes (2025) descreve...\n`,
+            ref_audiovisual_abnt: `### 📘 Audiovisual — Filmes, Séries, Documentários e YouTube (ABNT — NBR 6023:2018)\n\n**Referência:**\nTÍTULO do filme/documentário. Direção: Nome do Diretor. Produção: Nome do Produtor/Estúdio. Cidade/País de Produção: Produtora/Distribuidora, Ano. Formato/Suporte. Disponível em: <URL>. Acesso em: Data de Acesso.\n\n**Exemplo:**\nMANGUEZAIS do Pará: o ecossistema costeiro. Direção: João Silva. Belém: Produtora Amazônia, 2024. 1 vídeo (45 min). Disponível em: <https://youtube.com/...>. Acesso em: 27 jun. 2026.\n\n**Citação no texto:**\n- Parentética: (MANGUEZAIS..., 2024)\n- Narrativa: Segundo o documentário Manguezais do Pará (2024)...\n`,
+            ref_audiovisual_apa: `### 📗 Audiovisual — Filmes, Séries, Documentários (APA — 7ª ed.)\n\n**Referência (Filme):**\nSobrenome do Diretor, Iniciais. (Diretor). (Ano). Título do Filme [Filme]. Produtora.\n\n**Referência (Série):**\nSobrenome do Produtor Executivo, Iniciais. (Produtor Executivo). (Ano de Início-Fim). Título da Série [Série de TV]. Produtora.\n\n**Exemplo:**\nSilva, J. (Diretor). (2024). Manguezais do Pará: o ecossistema costeiro [Documentário]. Produtora Amazônia.\n\n**Citação no texto:**\n- Parentética: (Silva, 2024)\n- Narrativa: Silva (2024) apresenta...\n`,
+            ref_bibtex_artigo: `### 🔖 BibTeX — Artigo\n\n\`\`\`bibtex\n@article{chaveDeCitacao,\n  author = {Sobrenome, Nome and Sobrenome, Nome},\n  title = {Título da Obra},\n  year = {Ano},\n  journal = {Nome da Revista},\n  note = {Volume/Edição},\n  url = {URL}\n}\n\`\`\`\n`,
+            ref_bibtex_livro: `### 🔖 BibTeX — Livro\n\n\`\`\`bibtex\n@book{chaveDeCitacao,\n  author = {Sobrenome, Nome},\n  title = {Título do Livro},\n  year = {Ano},\n  publisher = {Editora},\n  address = {Cidade},\n  url = {URL}\n}\n\`\`\`\n`,
+            ref_bibtex_misc: `### 🔖 BibTeX — Misc (Sites, Vídeos e Audiovisual)\n\n\`\`\`bibtex\n@misc{chaveDeCitacao,\n  author = {Autor ou Entidade},\n  title = {Título do Material},\n  year = {Ano},\n  howpublished = {Nome do Site, Canal ou Produtora},\n  url = {URL}\n}\n\`\`\`\n`,
+
+            // --------------------------------------------------------------
+            // 1. DIÁRIO DE CAMPO E CADERNO FLORESTAL
+            // --------------------------------------------------------------
+            diario_campo_registro: `# DIÁRIO DE CAMPO & LIVRO DE BORDO — [DD/MM/AAAA]
+
+**Instituição:** Universidade do Estado do Pará (UEPA) — Campus Castanhal
+**Curso:** Bacharelado em Engenharia Florestal
+**Autor/Discente:** [Nome Completo]
+**Disciplina / Projeto:** [Nome da Disciplina ou Projeto PIBIC/Extensão]
+**Orientador / Docente Responsável:** Prof. Dr. [Nome]
+**Localidade:** [Município / Comunidade / UC / Fazenda / Pará]
+**Datum & Coordenadas Base:** SIRGAS 2000 (EPSG:4674) | Lat: [-x.xxxxxx], Lng: [-xx.xxxxxx] (Precisão GPS: ± x.x m)
+**Condições Ambientais:** Tempo: [Ensolarado / Nublado / Chuva] | Temp: [xx °C] | UR: [xx %] | Maré: [Preamar / Baixamar - xx m]
+**Horário:** Início: [HH:MM] | Término: [HH:MM]
+**Equipe em Campo:** [Nomes dos integrantes da equipe]
+
+---
+
+## 1. Objetivo Técnico Operacional
+[Definição clara e direta do escopo técnico da atividade. Ex: "Realizar o inventário florestal contínuo de 4 parcelas permanentes de 20x50 m para monitoramento da dinâmica de regeneração natural na área X."]
+
+## 2. Roteiro Metodológico e Instrumentação
+- **Procedimento:** [Descrição cronológica das etapas de caminhamento, demarcação, medição e coleta.]
+- **Instrumentos e Equipamentos:** [Fita diamétrica, Hipsômetro Vertex/Laser, Suta, GPS Garmin, Trena 50 m, Bússola Brunton, Podão, Prensa botânica, etc.]
+- **Geotecnologias & Softwares:** [QGIS, SW Maps, Avenza Maps, Epicollect5, iNaturalist, RStudio Posit.]
+
+## 3. Registro Cronológico e Ocorrências
+- **[HH:MM] — Deslocamento e Acesso:** [Condições de ramal, trilha de acesso, travessia fluvial, etc.]
+- **[HH:MM] — Execução Técnica:** [Instalação de unidades amostrais, coleta de dados dendrométricos, coleta botânica.]
+- **[HH:MM] — Desvios, Imprevistos e Riscos:** [Queda de árvores, chuvas torrenciais, erro instrumental, presença de fauna peçonhenta, etc. - registro objetivo e factual.]
+
+## 4. Síntese dos Dados Coletados / Unidades Amostrais
+| Parcela/Ponto | Lat (SIRGAS2000) | Lng (SIRGAS2000) | Variável / Objeto | Quantidade / Valor | Amostras / Testemunhos Coletados |
+|---|---|---|---|---|---|
+| P-01 | -1.xxxxxx | -47.xxxxxx | DAP ≥ 10 cm | 42 indivíduos | Coletas BOT-01 a BOT-05 |
+| P-02 | -1.xxxxxx | -47.xxxxxx | Solo (0-20 cm) | 3 subamostras | Solo Composto S-01 |
+
+## 5. Autoavaliação de Competências Desenvolvidas (PPC UEPA)
+- [ ] C1 / C3: Concepção, planejamento e execução de projetos de engenharia florestal
+- [ ] C2: Análise e modelagem de fenômenos biofísicos em ecossistemas tropicais
+- [ ] C5 / C6: Liderança, trabalho em equipe multidisciplinar e comunicação técnica
+- [ ] C8 / C10: Raciocínio crítico-reflexivo e uso sustentável dos recursos florestais
+
+## 6. Encaminhamentos Técnicos e Pendências
+- [ ] Processamento e triagem de material botânico na estufa/álcool 70%.
+- [ ] Tabulação e consistência de dados em planilha/R (verificação de outliers).
+- [ ] Exportação de trilhas (.gpx / .kml) e integração no banco de dados SIG (QGIS).
+
+---
+*Registro validado em campo por [Nome Completo] em [DD/MM/AAAA às HH:MM].*
+`,
+
+            diario_ficha_parcela: `# FICHA DE PARCELA — INVENTÁRIO FLORESTAL TROPICAL
+
+**Projeto / Disciplina:** [Nome do Projeto / TCC / Inventário Florestal]
+**Responsável Técnico:** [Nome do Autor] | **Anotador:** [Nome] | **Mapeador/Medidor:** [Nome]
+**Data:** [DD/MM/AAAA] | **Hora Início:** [HH:MM] | **Hora Término:** [HH:MM]
+**Método de Amostragem:** [Parcelas de Área Fixa / Amostragem Sistemática / Ponto-Quadrante / Linhas de Ponto]
+**Dimensão da Parcela:** [Ex: 20 m x 50 m = 1.000 m² (0,1 ha)] | **Nível de Inclusão:** DAP ≥ [10,0] cm
+
+### 1. Caracterização da Unidade Amostral
+- **Código da Parcela:** [Ex: PARC-01]
+- **Vértice 1 (SW):** Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\` (SIRGAS 2000)
+- **Vértice 2 (NE):** Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\` | **Altitude:** [xx] m
+- **Fitofisionomia:** [Floresta Ombrófila Densa de Terra Firme / Várzea / Igapó / Manguezal / Reflorestamento]
+- **Relevo / Declividade:** [Plano / Suave-Ondulado / Forte-Ondulado] — Declividade média: [xx %]
+- **Drenagem & Solo:** [Bem drenado / Hidromórfico / Areias Quartzosas / Latossolo Amarelo / Gleissolo]
+- **Histórico de Perturbação:** [Corte Seletivo / Fogo / Vento / Exploração Passada / Floresta Primária Intacta]
+
+---
+
+### 2. Mensuração dos Indivíduos Arbóreos
+
+| Nº | Plaqueta | Família | Nome Científico / Vulgar | CAP (cm) | DAP (cm) | H. Tot (m) | H. Com (m) | QF | PC | CIL | Sanidade | Obs. / Exsudato |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 01 | 101 | Fabaceae | *Inga* sp. (Ingá) | | | | | | | | | |
+| 02 | 102 | Lecythidaceae | *Bertholletia excelsa* (Castanheira) | | | | | | | | | |
+| 03 | 103 | Rhizophoraceae | *Rhizophora mangle* (Mangue-vermelho) | | | | | | | | | |
+| 04 | 104 | | | | | | | | | | | |
+| 05 | 105 | | | | | | | | | | | |
+
+> **Convenções de Campo:**
+> - **DAP:** Calculado via $DAP = \\frac{CAP}{\\pi}$ ou medido com fita diamétrica a 1,30 m do solo.
+> - **QF (Qualidade do Fuste):** **1** = Retilíneo/comercial; **2** = Levemente tortuoso; **3** = Muito tortuoso/inaproveitável.
+> - **PC (Posição da Copa - Dawkins):** **1** = Emergente; **2** = Dominante; **3** = Codominante; **4** = Dominada; **5** = Sub-bosque profundo.
+> - **CIL (Cipó / Infestação de Lianas):** **0** = Livre; **1** = No fuste; **2** = Na copa sem cobrir ramos guia; **3** = Copa totalmente infestada.
+> - **Sanidade:** **S** = Sadio; **A** = Ataque de pragas; **P** = Podridão/Fungos; **M** = Morta em pé.
+
+---
+
+### 3. Dinâmica de Sub-bosque e Regeneração
+- **Serrapilheira (Espessura média):** [Ex: 3,5 cm] | **Necromassa:** [Ausente / Baixa / Moderada / Alta]
+- **Regeneração Natural ($DAP < 10\\text{ cm}$ e Altura $\\ge 1,5\\text{ m}$):** [Avaliação qualitativa]
+- **Abertura de Dossel / Clareiras:** [ ] Sem clareira [ ] Clareira pequena (< 100 m²) [ ] Clareira média [ ] Grande clareira
+
+---
+*Dados levantados em campo. Validados para consistência em [DD/MM/AAAA].*
+`,
+
+            diario_checklist_saida: `## ✅ CHECKLIST RIGOROSO — EXPEDIÇÃO DE CAMPO FLORESTAL
+**Projeto / Disciplina:** [Nome da Atividade / Excursão Curricular]
+**Data da Saída:** [DD/MM/AAAA] | **Retorno Previsto:** [DD/MM/AAAA]
+**Líder de Equipe:** [Nome do Responsável] | **Área Destino:** [Município / UC / Floresta]
+
+---
+
+### 📋 1. Documentação, Autorizações & Segurança Institucional
+- [ ] Ofício de autorização institucional UEPA assinado pela Coordenação
+- [ ] Autorização de entrada na UC / SISBIO (ICMBio) / IDEFLOR-Bio / Anuência do proprietário
+- [ ] Documento oficial com foto, cartão SUS e comprovante de matrícula/seguro
+- [ ] Lista impressa de contatos de emergência (Hospital regional, Bombeiros 193, CIATOX)
+- [ ] Fichas de campo impressas em pranchetas com proteção plástica impermeável
+
+### 🧰 2. Equipamentos de Medição e Amostragem Dendrométrica
+- [ ] Fitas diamétricas com graduação em $\\pi$ (precisão 0,1 cm) (mín. 2 unidades)
+- [ ] Fitas métricas convencionais e trenas de fibra de 30 m ou 50 m
+- [ ] Hipsômetro (Vertex IV/Laser ou Clinômetro Suunto) + baterias reservas
+- [ ] GPS de navegação com pilhas alcalinas extras + cabo de dados
+- [ ] Bússola de visada (tipo Brunton/Silva) com declinação ajustada
+- [ ] Plaqueteadeiras, plaquetas de alumínio numeradas e pregos
+- [ ] Giz florestal / Tinta spray ecológica para marcação de árvores
+
+### 🌿 3. Material para Coleta e Preservação Botânica & Dendrológica
+- [ ] Podão articulado com cabo extensor / Tesoura de poda alta
+- [ ] Facão de campo (12'' ou 14'') afiado com bainha de lona e lima
+- [ ] Canivete suíço / estilete retrátil para incisão de casca e exsudatos
+- [ ] Prensa de madeira padrão (30 x 45 cm) com papelões, jornais e flertes
+- [ ] Sacos plásticos reforçados (50 L e 100 L) para transporte de ramos
+- [ ] Frascos com Álcool a 70% + glicerina a 5% (flores e propágulos)
+- [ ] Sílica gel com indicador de umidade em tubos Falcon (para DNA)
+- [ ] Lupa de campo (10x ou 20x com LED)
+
+### 🦺 4. EPIs & Primeiros Socorros
+- [ ] Botas de couro cano médio/longo com biqueira de segurança
+- [ ] Perneiras de segurança em PVC/couro contra ofídios (obrigatório)
+- [ ] Chapéu de abas largas com proteção de nuca / boné legionário
+- [ ] Capa de chuva impermeável e sacos estanques para eletrônicos
+- [ ] Protetor solar (FPS ≥ 50) e repelente de insetos (DEET/Icaridina)
+- [ ] Kit de Primeiros Socorros completo (Antisséptico, ataduras, soro, antialérgico, analgésico)
+- [ ] Cantil/reservatório com água potável (mín. 3 L por pessoa/dia)
+
+### 📱 5. Geotecnologias & Meios Digitais
+- [ ] Celular carregado + Power Bank reserva (mín. 10.000 mAh)
+- [ ] Mapas offline descarregados no SW Maps, Avenza Maps e QField
+- [ ] Vetores e ortofotos (.shp, .gpkg, .kml) pré-carregados no smartphone
+
+---
+*Checklist conferido antes da partida.*
+`,
+
+            diario_registro_amostra: `# REGISTRO DE AMOSTRA BOTÂNICA & DENDROLÓGICA (VOUCHER)
+
+**Número do Coletor:** [Ex: EMN-042] | **Série:** [Sigla / Ano: EMN-2026]
+**Coletor(es):** [Nome do Coletor Principal, Co-coletores]
+**Data da Coleta:** [DD/MM/AAAA] | **Horário:** [HH:MM]
+**Localidade:** [Brasil, Pará, Município, Reserva/Propriedade, Trilha/Igarapé]
+**Coordenadas Geográficas (SIRGAS 2000):** Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\` | **Altitude:** [xx] m
+**Habitat / Microtopografia:** [Terra Firme / Várzea Alta / Igapó / Manguezal / Restinga]
+
+---
+
+### 1. Dados Taxonômicos Preliminares
+- **Família:** [Ex: Fabaceae / Rhizophoraceae / Lecythidaceae / Meliaceae]
+- **Gênero / Espécie:** *[Nome científico se reconhecido]*
+- **Nome Vulgar Regional:** [Ex: Castanha-do-Pará, Mangue-vermelho, Paricá, Andiroba]
+- **Status de Identificação:** [ ] Espécie certa [ ] Comparada com referência [ ] Apenas Família/Gênero
+
+---
+
+### 2. Características Morfológicas & Dendrológicas (Indivíduo Vivo em Campo)
+- **Hábito:** [ ] Árvore [ ] Arvoreta [ ] Arbusto [ ] Liana / Cipó lenhoso [ ] Epífita [ ] Hemiepífita [ ] Erva
+- **Porte:** Altura Total: [xx] m | Altura da 1ª Ramificação: [xx] m | DAP: [xx] cm
+- **Base do Tronco:** [ ] Cilíndrica [ ] Sapopemas [ ] Raízes escoras (stilt roots) [ ] Pneumatóforos
+- **Ritidoma / Casca Externa:**
+  - **Textura:** [Lisa / Lenticelada / Fissurada / Fendilhada / Descamante em placas / Reticulada]
+  - **Coloração:** [Parda, avermelhada, acinzentada, esbranquiçada]
+  - **Desprendimento:** [Papiráceo / Em tiras fibrosas / Em placas / Ausente]
+- **Casca Viva & Alburno:**
+  - **Espessura da casca:** [xx] mm | **Cor da casca viva:** [Amarelada, creme, rósea, avermelhada]
+  - **Odor:** [Inodoro / Aromático / Cumarina / Ranço / Alho / Amêndoas]
+- **Exsudato da Casca / Tronco:**
+  - **Presença:** [ ] Presente [ ] Ausente
+  - **Tipo:** [Látex viscoso / Resina / Goma / Seiva aquosa translúcida]
+  - **Coloração:** [Branco-leitoso / Creme / Amarelo / Vermelho / Incolor]
+  - **Oxidação:** [Muda de cor com o ar? Ex: Transparente -> Vermelho]
+- **Folhas:**
+  - **Filotaxia:** [Alterna espiralada / Alterna dística / Oposta cruzada / Verticilada]
+  - **Tipo:** [Simples / Composta pinada / Bipinada / Digitada / Trifoliolada]
+  - **Glândulas / Estípulas:** [Presença de glândulas no pecíolo / Estípula interpeciolar / Domácias]
+- **Estruturas Reprodutivas & Fenologia:**
+  - **Fenologia:** [ ] Botão [ ] Flor aberta [ ] Fruto imaturo [ ] Fruto maduro [ ] Estéril
+  - **Flores:** Cor das pétalas: [ ], Cálice: [ ], Odor: [Inodora / Adocicada / Fétida]
+  - **Frutos / Sementes:** Tipo: [Vagem / Bagas / Cápsula / Drupa / Pixídio / Propágulo vivíparo], Cor: [ ]
+
+---
+
+### 3. Destino, Amostragem e Geotecnologia
+- **Tipos de Testemunho Preparados:**
+  - [ ] Ramos foliares férteis prensados (Exsicata - mín. 3 duplicatas)
+  - [ ] Flores/Frutos em frasco com Álcool a 70% + Glicerina a 5%
+  - [ ] Folhas jovens dessecadas em Sílica Gel para DNA
+  - [ ] Amostra de madeira / Xiloteca (amostra de alburno e cerne)
+- **Herbário(s) de Destino das Duplicatas:** [Herbário MFS - UEPA / Herbário MG - Museu Goeldi / Herbário IAN - Embrapa]
+- **Registro Digital:** Código no SW Maps / iNaturalist / Avenza: [Nº/Link]
+
+---
+*Amostra catalogada por [Nome do Autor].*
+`,
+
+            diario_cubagem_rigorosa: `# FICHA DE CUBAGEM RIGOROSA DE ÁRVORES (DENDROMETRIA)
+
+**Projeto / Disciplina:** Dendrometria Florestal / Cubagem de Madeira / Inventário Florestal
+**Localidade:** [Município / Área Experimental / Serraria / Pará]
+**Data:** [DD/MM/AAAA] | **Equipe:** [Nomes dos Medidores]
+**Condição da Árvore:** [ ] Árvore Abatida [ ] Árvore em Pé (Escada/Hipsômetro ótico)
+**Espécie:** *[Nome científico]* | **Nome Vulgar:** [Nome Vulgar]
+**DAP:** [xx.x] cm | **CAP (1,30 m):** [xx.x] cm | **Altura Total ($H_t$):** [xx.x] m | **Altura Comercial ($H_c$):** [xx.x] m
+
+---
+
+### 1. Mensuração de Seções do Tronco (Método de Smalian)
+
+> **Equações:**
+> - $g_i = \\frac{\\pi \\cdot d_i^2}{40.000} \\text{ (Área transversal em m², com } d_i \\text{ em cm)}$
+> - $V_{secao} = \\frac{g_1 + g_2}{2} \\cdot L \\text{ (Volume em m³)}$
+> - $V_{ponta} = \\frac{g_{base\\_ponta}}{3} \\cdot L_{ponta} \\text{ (Volume de cone em m³)}$
+
+| Seção Nº | Posição / Altura ($h_i$ em m) | Comprimento ($L$ em m) | $d_{c/casca}$ (cm) | $d_{s/casca}$ (cm) | $g_{c/casca}$ (m²) | $g_{s/casca}$ (m²) | $V_{c/casca}$ (m³) | $V_{s/casca}$ (m³) |
+|---|---|---|---|---|---|---|---|---|
+| S-00 (Base) | 0,00 | 0,30 | | | | | | |
+| S-01 (Toco) | 0,30 | 0,70 | | | | | | |
+| S-02 (DAP) | 1,30 | 0,70 | | | | | | |
+| S-03 | 2,00 | 2,00 | | | | | | |
+| S-04 | 4,00 | 2,00 | | | | | | |
+| S-05 | 6,00 | 2,00 | | | | | | |
+| S-06 | 8,00 | 2,00 | | | | | | |
+| S-07 ($H_c$) | 10,00 | 2,00 | | | | | | |
+| S-08 (Ponta) | $H_t$: [xx] | [xx] | | | | | | |
+
+---
+
+### 2. Consolidação Volumétrica e Fatores de Forma
+- **Volume Rigoroso Total com Casca ($V_t$):** \`[xx.xxxx]\` m³
+- **Volume Rigoroso Comercial com Casca ($V_c$):** \`[xx.xxxx]\` m³
+- **Volume Rigoroso sem Casca ($V_{s/c}$):** \`[xx.xxxx]\` m³
+- **Volume Cilíndrico na Base ($V_{cil} = g_{1.30} \\cdot H_t$):** \`[xx.xxxx]\` m³
+- **Fator de Forma Artificial ($f_{1.30} = \\frac{V_t}{V_{cil}}$):** \`[0.xxxx]\`
+- **Porcentagem de Casca ($\\%Casca = \\frac{V_t - V_{s/c}}{V_t} \\cdot 100$):** \`[xx.x]\` %
+
+---
+*Ficha processada conforme normas de Mensuração Florestal.*
+`,
+
+            diario_prad_degradacao: `# FICHA DE AVALIAÇÃO RÁPIDA DE ÁREA DEGRADADA (PRAD / EIA)
+
+**Projeto:** Recuperação de Áreas Antropizadas / Licenciamento Ambiental
+**Avaliador(a):** [Nome do Engenheiro Florestal / Discente]
+**Data:** [DD/MM/AAAA] | **Hora:** [HH:MM]
+**Localização:** [Município / Gleba / Microbacia Hidrográfica]
+**Coordenadas Centrais (SIRGAS 2000):** Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\`
+**Enquadramento Legal:** [ ] APP (Área de Preservação Permanente) [ ] RL (Reserva Legal) [ ] Área de Uso Alternativo do Solo
+
+---
+
+### 1. Diagnóstico do Meio Físico e Solo
+- **Uso Anterior da Terra:** [Pastagem extensiva degradada / Agricultura de corte e queima / Mineração / Supressão vegetal]
+- **Processos Erosivos Ativos:** [ ] Laminar leve [ ] Sulcos frequentes [ ] Voçorocas ativas [ ] Ausente
+- **Compactação e Estrutura:** [Solto / Friável / Fortemente compactado por pisoteio bovino ou maquinário]
+- **Presença de Água / Recursos Hídricos:** [Nascente assoreada / Margem de igarapé sem mata ciliar / Sem corpo d'água próximo]
+
+---
+
+### 2. Diagnóstico da Vegetação e Potencial de Auto-Recuperação
+- **Cobertura Vegetal Atual:**
+  - [ ] Solo completamente exposto (> 70% descoberto)
+  - [ ] Gramíneas invasoras dominantes (Ex: *Urochloa* / *Brachiaria* sp.)
+  - [ ] Samambaias / Espécies invasoras agressivas (Ex: *Pteridium* sp.)
+  - [ ] Capoeira em estágio inicial (presença de *Cecropia*, *Vismia*, *Solanum*)
+- **Chuva e Banco de Sementes:** Presença de fragmentos florestais maduros a menos de 100 m? [ ] Sim [ ] Não
+- **Presença de Matrizes / Poleiros Naturais:** [Árvores remanescentes isoladas, tocos rebrotando, ninhos, poleiros para avifauna]
+
+---
+
+### 3. Prescrição Técnica Silvicultural Preliminar
+- **Indicação Metodológica de Restauração:**
+  - [ ] Condução da regeneração natural com isolamento da área (cercamento)
+  - [ ] Plantio de enriquecimento em linhas/clareiras com espécies nativas de valor ecológico
+  - [ ] Plantio em área total com módulos sucessionais (Pioneiras + Secundárias + Clímax)
+  - [ ] Implantação de Sistema Agroflorestal (SAF) para fins de recomposição e soberania
+- **Espécies Nativas Regionais Indicadas para Plantio Inicial:**
+  1. Pioneiras / Cobertura rápida: [Ex: *Schizolobium parahyba* var. *amazonicum* (Paricá), *Cecropia peltata* (Embaúba), *Inga edulis* (Ingá-cipó)]
+  2. Não Pioneiras / Estruturais: [Ex: *Dipteryx odorata* (Cumaru), *Bertholletia excelsa* (Castanheira), *Carapa guianensis* (Andiroba)]
+
+---
+*Vistoria técnica finalizada para subsidiar relatório do PRAD/EIA.*
+`,
+
+            diario_vistoria_pericia: `# LAUDO DE VISTORIA TÉCNICA E PERÍCIA AMBIENTAL FLORESTAL
+
+**Número do Registro / RT:** [Ex: VT-2026/003]
+**Responsável Técnico:** [Nome do Responsável] | **CREA / Visto:** [Nº e Região]
+**Interessado / Órgão Demandante:** [SEMAS-PA / ICMBio / IDEFLOR-Bio / Perícia Judicial / Propriedade Privada]
+**Data da Vistoria:** [DD/MM/AAAA] | **Hora:** [HH:MM]
+**Local Vistoriado:** [Nome do Imóvel Rural / Pátio Industrial Madeireiro / Unidade de Manejo]
+**Município:** [Nome do Município - PA] | **CAR do Imóvel:** [PA-xxxxxxxxxxxxxxxxxxxx]
+**Datum & Coordenadas:** SIRGAS 2000 | Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\`
+
+---
+
+### 1. Objeto da Vistoria Técnica
+[Definição clara do motivo da vistoria: Constatação de desmatamento ilegal, conferência de volumetria de pátio de toras para emissão de DOF/Sisflora, averiguação de queima não autorizada, monitoramento de Plano de Manejo Florestal Sustentável (PMFS) ou licenciamento de supressão vegetal.]
+
+---
+
+### 2. Vistoria de Campo & Constatações Fáticas
+- **Área Afetada / Mensurada:** [xx.xx] hectares (mensurado via tracklog GPS com receptor geodésico/navegação).
+- **Tipologia Vegetal Impactada / Vistoriada:** [Floresta Ombrófila Densa de Terra Firme / Floresta de Várzea / Manguezal]
+- **Equipamentos e Máquinas Identificados no Local:** [Tratores de esteira, motosserras, caminhões prancha — marcas e placas].
+- **Cálculo Expedito de Volume Exploratório / Estocado:**
+  - Quantidade de toras / cepos medidos: [xx] indivíduos.
+  - Espécies dominantes identificadas pelo lenho/casca: [Ex: *Manilkara huberi* (Maçaranduba), *Handroanthus* sp. (Ipê), *Vouacapoua americana* (Acapu)].
+  - Volume estimado: \`[xxx.xx]\` m³ de madeira em tora.
+
+---
+
+### 3. Caracterização de Danos & Passivos Ambientais
+- **Supressão de APP / Margem de Corpos Hídricos:** [ ] Sim ([xx] metros violados) [ ] Não
+- **Uso de Fogo não Autorizado:** [ ] Sim, com queima de biomassa [ ] Não
+- **Destinação e Guarda de Resíduos / Óleos:** [Adequada / Irregular com risco de contaminação freática]
+
+---
+
+### 4. Parecer Conclusivo & Encaminhamentos
+[Parecer técnico fundamentado na legislação ambiental vigente (Lei Federal nº 12.651/2012 - Código Florestal; Lei nº 9.605/1998 - Crimes Ambientais; Instruções Normativas SEMAS-PA).]
+1. [Conclusão técnica sobre a regularidade ou infração constatada]
+2. [Recomendação técnica: Notificação / Embargo / Plano de Recuperação / Emissão de Laudo Definitivo]
+
+---
+*Laudo técnico finalizado e subscrito com responsabilidade técnica.*
+`,
+
+            // --------------------------------------------------------------
+            // 2. REDAÇÃO, COMUNICAÇÃO & PRODUÇÃO TEXTUAL
+            // --------------------------------------------------------------
+            redacao_dissertativa_completa: `# ✍️ REDAÇÃO DISSERTATIVA-ARGUMENTATIVA: [TEMA]
+
+**Autor:** [Seu Nome] | **Data:** [DD/MM/AAAA]
+**Eixo Temático:** [Meio Ambiente / Tecnologia / Sociedade / Educação]
+
+---
+
+## 1. Introdução
+- **Contextualização:** [Apresente o assunto de forma ampla - alusão histórica, filosófica, sociológica ou fato recente].
+- **Problematização:** [Apresente a contradição central do tema no cenário brasileiro atual].
+- **Tese Principal:** [Defina com clareza seu ponto de vista e antecipe os dois argumentos: Argumento 1 (Causa/Fator A) e Argumento 2 (Consequência/Fator B)].
+
+## 2. Desenvolvimento I (Argumento 1)
+- **Tópico Frasal:** [Afirmação direta apresentando o primeiro núcleo argumentativo].
+- **Repertório Legitimado:** [Citação de autoridade, dado estatístico oficial (IBGE, INPE, FAO), marco legal (CF/88, Código Florestal) ou conceito filosófico].
+- **Análise Crítica & Conexão:** [Explique como o repertório legitima sua tese e detalhe o impacto dessa dinâmica na realidade].
+
+## 3. Desenvolvimento II (Argumento 2)
+- **Tópico Frasal:** [Afirmação direta introduzindo o segundo argumento que aprofunda o problema].
+- **Repertório Legitimado:** [Exemplo concreto, fato histórico, estudo acadêmico ou teoria sociológica].
+- **Análise Crítica & Fechamento:** [Demonstre a gravidade da omissão ou negligência, sustentando a urgência de uma solução].
+
+## 4. Conclusão (Proposta de Intervenção Completa)
+- **Retomada da Tese:** [Reafirmação do posicionamento em consonância com os argumentos expostos].
+- **1. Agente (Quem fará?):** [Ministério do Meio Ambiente / SEMAS / Universidades Públicas / Sociedade Civil].
+- **2. Ação (O que fará?):** [Ação prática, exequível e de intervenção direta].
+- **3. Meio/Modo (Como fará?):** [Por intermédio de repasse orçamentário / fiscalização integrada / campanhas educativas / parcerias público-privadas].
+- **4. Efeito (Para que fará?):** [Finalidade e impacto transformador esperado a médio/longo prazo].
+- **5. Detalhamento (Explicação extra):** [Detalhamento minucioso de um dos 4 elementos acima para garantir viabilidade].
+
+---
+*Redação estruturada em conformidade com o padrão formal dissertativo.*
+`,
+
+            resenha_fichamento_academico: `# 📖 FICHAMENTO & RESENHA ACADÊMICA
+
+**Referência ABNT:** [SOBRENOME, Nome. Título da obra: subtítulo. Local: Editora, Ano.]
+**Disciplina / Linha de Estudo:** [Nome da Matéria / Linha de Pesquisa]
+**Palavras-Chave:** [Termo 1; Termo 2; Termo 3]
+
+---
+
+### 1. Ideia Central & Objetivo do Autor
+[Síntese em 1 parágrafo da tese central defendida na obra e o objetivo da publicação.]
+
+### 2. Principais Conceitos & Citações Diretas
+- **Conceito 1 ([Tema]):** "[Inserir transcrição literal fiel]" (p. xx).
+  - *Comentário analítico:* [Explicação do conceito no contexto de Engenharia Florestal].
+- **Conceito 2 ([Tema]):** "[Inserir transcrição literal fiel]" (p. xx).
+  - *Comentário analítico:* [Explicação prática do conceito].
+
+### 3. Síntese dos Argumentos e Metodologia
+- **Capítulo / Seção 1:** [Resumo dos pontos centrais].
+- **Capítulo / Seção 2:** [Resumo dos pontos centrais].
+
+### 4. Apreciação Crítica & Aplicação no Contexto Amazônico
+[Análise reflexiva: Pontos fortes, fragilidades metodológicas e como essa leitura contribui diretamente para sua formação teórica ou para seu TCC na UEPA.]
+
+---
+*Fichamento registrado para acervo bibliográfico pessoal.*
+`,
+
+            // --------------------------------------------------------------
+            // 3. ESTUDO TEÓRICO, RESOLUÇÃO & SÍNTESE
+            // --------------------------------------------------------------
+            resumo_teorico_aula: `# 📚 RESUMO TEÓRICO: [ASSUNTO DA AULA]
+
+**Disciplina:** [Nome da Disciplina] | **Docente:** Prof. [Nome]
+**Data da Aula:** [DD/MM/AAAA] | **Bloco Curricular:** [1º ao 10º Semestre]
+
+---
+
+### 1. Conceitos Fundamentais
+- **Definição Central:** [Conceito principal explicado de forma clara e rigorosa].
+- **Terminologia Técnica:** [Listagem dos principais termos e jargões da aula].
+- **Inter-relação:** [Como este tópico dialoga com outras disciplinas do curso].
+
+### 2. Equações, Modelos & Fórmulas-Chave
+$$
+\\text{Equação Principal: } V = g \\cdot h \\cdot f
+$$
+- Onde:
+  - $g$: Área transversal ($m^2$)
+  - $h$: Altura da árvore ($m$)
+  - $f$: Fator de forma artificial
+
+### 3. Tópicos de Fixação e Checklist de Estudo
+- [ ] Revisar conceitos de...
+- [ ] Refazer os exercícios práticos da lista...
+- [ ] Consultar capítulo de referência no livro da bibliografia básica.
+
+---
+*Resumo de aula estruturado para revisão rápida e fixação.*
+`,
+
+            resolucao_exercicio_passo_a_passo: `# 🔢 RESOLUÇÃO DE EXERCÍCIO: [TEMA / DISCIPLINA]
+
+**Disciplina:** [Ex: Cálculo I / Dendrometria / Fenômenos de Transporte / Mecânica dos Sólidos]
+**Fonte / Lista:** [Lista de Exercícios Nº xx — Questão yy]
+
+---
+
+### 1. Dados Fornecidos pelo Enunciado
+- Variável $A = [\\text{valor e unidade}]$
+- Variável $B = [\\text{valor e unidade}]$
+- Constantes aplicáveis: $k = [\\text{valor}]$
+
+### 2. Fórmulas e Modelos Matemáticos Aplicáveis
+$$
+f(x) = \\int_{a}^{b} g(x) \\, dx \\quad \\text{ou} \\quad \\sigma = \\frac{F}{A}
+$$
+
+### 3. Memória de Cálculo Passo a Passo
+1. **Etapa 1 (Adequação de unidades):** [Conversão de cm para m, bar para Pa, etc.]
+2. **Etapa 2 (Substituição na equação):** [Demonstração algébrica da montagem]
+3. **Etapa 3 (Resolução e simplificação):** [Cálculos intermediários]
+
+### 4. Resposta Final e Interpretação Física/Biológica
+> **Resultado Final:** $\\mathbf{[Valor \\ com \\ Unidade]}$
+- **Interpretação Técnica:** [Explicação do significado físico do resultado no manejo florestal ou no projeto de engenharia].
+
+---
+*Exercício resolvido e conferido.*
+`,
+
+            // --------------------------------------------------------------
+            // 4. SILVICULTURA, VIVEIROS & MANEJO OPERACIONAL
+            // --------------------------------------------------------------
+            silv_coleta_sementes: `# 🌰 FICHA DE COLETA E BENEFICIAMENTO DE SEMENTES FLORESTAIS
+
+**Projeto / Disciplina:** Biologia, Produção e Tecnologia de Sementes Florestais
+**Coletor:** [Nome Completo] | **Data:** [DD/MM/AAAA]
+**Local da Coleta:** [Município / Reserva / Matriz / Fazenda]
+**Coordenadas da Matriz (SIRGAS 2000):** Lat \`[-x.xxxxxx]\` | Lng \`[-xx.xxxxxx]\`
+
+---
+
+### 1. Caracterização da Espécie e Matriz
+- **Espécie Botânica:** *[Nome científico]* | **Nome Vulgar:** [Nome popular]
+- **Código da Árvore Matriz:** [Ex: MAT-01] | **DAP:** [xx.x] cm | **Altura Total:** [xx.x] m
+- **Condição Fitossanitária da Matriz:** [ ] Excelente [ ] Boa [ ] Regular (isenta de brocas e fungos no tronco)
+- **Tipo de Fruto:** [Vagem / Cápsula / Bagas / Drupa / Pixídio]
+
+### 2. Operação de Colheita
+- **Método de Coleta:** [ ] Coleta no chão após queda natural [ ] Escalada/Podão de galhos [ ] Lonas de contenção
+- **Peso Bruto dos Frutos Coletados:** \`[xx.xx]\` kg
+- **Estágio de Maturação:** [ ] Frutos verdes [ ] Frutos de vez [ ] Frutos completamente maduros / Deiscentes
+
+### 3. Beneficiamento, Secagem e Rendimento
+- **Método de Extração:** [Manual / Mecânico com despolpador / Maceração em água]
+- **Secagem:** [ ] Sombra ventilada [ ] Estufa a 35 °C [ ] Exposição solar controlada
+- **Peso de Sementes Limpas:** \`[xx.xx]\` kg | **Rendimento de Beneficiamento:** \`[xx.x]\` %
+- **Peso de 1.000 Sementes (PMS):** \`[xx.xx]\` g
+- **Número de Sementes por Quilo:** \`[xxxx]\` sementes/kg
+- **Forma de Armazenamento:** [Câmara fria (10 °C) / Sacos de papel kraft / Vidro hermético com sílica]
+
+---
+*Lote de sementes identificado e registrado para rastreabilidade genética.*
+`,
+
+            silv_monitoramento_mudas: `# 🌱 FICHA DE MONITORAMENTO DE VIVEIRO FLORESTAL
+
+**Viveiro:** [Nome do Viveiro / UEPA Campus Castanhal]
+**Responsável Técnico:** [Nome do Responsável / Discente]
+**Data da Avaliação:** [DD/MM/AAAA] | **Idade do Lote:** [xx] dias após semeadura/repicagem
+**Espécie:** *[Nome Científico]* | **Lote Nº:** [LOTE-2026-xx]
+
+---
+
+### 1. Parâmetros de Manejo e Substrato
+- **Tipo de Recipiente:** [ ] Tubete plástico (120 cm³) [ ] Tubete (280 cm³) [ ] Saquinho de polietileno
+- **Composição do Substrato:** [Terra vegetal + Casca de arroz carbonizada + Vermiculita + Adubo de liberação lenta]
+- **Regime de Irrigação:** [Microaspersão - 3x ao dia (lâmina de xx mm)] | **Sombreamento:** [Pleno sol / Sombrite 50%]
+
+### 2. Avaliação Biométrica de Amostra (Amostragem de 30 Mudas)
+- **Altura Média da Parte Aérea ($H$):** \`[xx.x]\` cm
+- **Diâmetro do Coleto Médio ($DC$):** \`[x.xx]\` mm
+- **Relação $H/DC$ (Quociente de Robustez):** \`[x.xx]\`
+- **Massa Seca da Parte Aérea ($MSPA$):** \`[x.xx]\` g
+- **Massa Seca da Raiz ($MSR$):** \`[x.xx]\` g
+- **Massa Seca Total ($MST = MSPA + MSR$):** \`[x.xx]\` g
+- **Índice de Qualidade de Dickson ($IQD = \\frac{MST}{\\frac{H}{DC} + \\frac{MSPA}{MSR}}$):** \`[x.xxxx]\`
+
+### 3. Controle Fitossanitário e Rustificação
+- **Presença de Tombamento (*Damping-off*):** [ ] Sim [ ] Não
+- **Sintomas de Deficiência Nutricional:** [Clorose foliar (N) / Arroxeamento (P) / Necrose marginal (K) / Ausente]
+- **Fase de Rustificação Iniciada?** [ ] Sim (redução de rega e exposição solar plena) [ ] Não
+
+---
+*Monitoramento executado conforme padrões de qualidade de mudas florestais.*
+`,
+
+            silv_fitossociologia_ivi: `# 🌿 INVENTÁRIO FITOSSOCIOLÓGICO — CÁLCULO DE IVI
+
+**Área de Estudo:** [Nome da Floresta / Gleba / Fragmento Florestal]
+**Área Total Amostrada:** \`[x.xx]\` ha (Nº de parcelas: [xx] de dimensão [xx x xx] m)
+**Nível de Inclusão:** DAP ≥ [10,0] cm | **Data:** [DD/MM/AAAA]
+
+---
+
+### 1. Tabela Fitossociológica Resumida por Espécie
+
+> **Fórmulas:**
+> - $DR_i = \\frac{DA_i}{\\sum DA} \\cdot 100 \\quad (DA_i = \\text{Indivíduos/ha})$
+> - $FR_i = \\frac{FA_i}{\\sum FA} \\cdot 100 \\quad (FA_i = \\frac{\\text{Parcelas com a espécie}}{\\text{Total de parcelas}} \\cdot 100)$
+> - $DoR_i = \\frac{DoA_i}{\\sum DoA} \\cdot 100 \\quad (DoA_i = \\text{Área basal } m^2/ha)$
+> - $IVI_i = DR_i + FR_i + DoR_i \\quad (\\text{Escala de 0 a 300\\% ou 0 a 100\\%})$
+
+| Espécie | Família | Nº Ind. ($N_i$) | $DA$ (ind/ha) | $DR$ (%) | $FA$ (%) | $FR$ (%) | $DoA$ (m²/ha) | $DoR$ (%) | IVI (%) |
+|---|---|---|---|---|---|---|---|---|---|
+| *Eperua falcata* | Fabaceae | | | | | | | | |
+| *Vouacapoua americana* | Fabaceae | | | | | | | | |
+| *Goupia glabra* | Goupiaceae | | | | | | | | |
+| *Symphonia globulifera* | Clusiaceae | | | | | | | | |
+
+---
+
+### 2. Índices de Diversidade e Estrutura Horizontal
+- **Índice de Diversidade de Shannon-Wiener ($H'$):** \`[x.xxxx]\` nats/ind
+- **Índice de Equabilidade de Pielou ($J'$):** \`[0.xxxx]\`
+- **Área Basal Total do Povoamento ($G$):** \`[xx.xx]\` m²/ha
+- **Densidade Total:** \`[xxx.x]\` árvores/ha
+
+---
+*Planilha de fitossociologia gerada para subsídio de ecologia e manejo florestal.*
+`,
+
+            // --------------------------------------------------------------
+            // 5. LABORATÓRIO & ANÁLISE TECNOLÓGICA
+            // --------------------------------------------------------------
+            lab_umidade_densidade_madeira: `# 🪵 ENSAIO LABORATORIAL — UMIDADE & DENSIDADE DA MADEIRA
+
+**Laboratório:** Laboratório Multiusuário de Engenharia Florestal (LAMEF / UEPA)
+**Disciplina:** Propriedades Físicas e Mecânicas da Madeira / Secagem da Madeira
+**Responsável Técnico:** [Nome do Aluno/Pesquisador] | **Data:** [DD/MM/AAAA]
+**Espécie em Análise:** *[Nome científico]* | **Nome Vulgar:** [Nome popular]
+
+---
+
+### 1. Determinação do Teor de Umidade (Método Gravimétrico - Estufa 103 ± 2 °C)
+
+> **Equação:** $TU (\\%) = \\frac{M_u - M_s}{M_s} \\cdot 100$
+
+| Amostra / Corpo de Prova | Massa Úmida ($M_u$ em g) | Massa Seca em Estufa ($M_s$ em g) | Massa de Água ($M_u - M_s$) | Teor de Umidade ($TU$ em %) |
+|---|---|---|---|---|
+| CP-01 | | | | |
+| CP-02 | | | | |
+| CP-03 | | | | |
+
+- **Teor de Umidade Médio do Lote:** \`[xx.x]\` %
+
+---
+
+### 2. Determinação das Densidades da Madeira (Básica e Aparente)
+
+> **Equações:**
+> - $\\rho_{basica} = \\frac{M_s}{V_{verde}} \\quad (g/cm^3 \\text{ ou } kg/m^3)$
+> - $\\rho_{aparente (12\\%)} = \\frac{M_{12}}{V_{12}} \\quad (g/cm^3)$
+
+| Amostra | $M_s$ (g) | $V_{verde}$ (cm³) | $\\rho_{basica}$ (g/cm³) | $M_{12}$ (g) | $V_{12}$ (cm³) | $\\rho_{aparente}$ (g/cm³) |
+|---|---|---|---|---|---|---|
+| CP-01 | | | | | | |
+| CP-02 | | | | | | |
+| CP-03 | | | | | | |
+
+- **Densidade Básica Média:** \`[0.xxx]\` g/cm³
+- **Classificação Tecnológica:** [ ] Muito Leve (< 0,40) [ ] Leve (0,40-0,55) [ ] Média (0,55-0,72) [ ] Pesada (0,72-0,90) [ ] Muito Pesada (> 0,90)
+
+---
+*Ensaio conduzido em conformidade com as normas ABNT NBR 7190 e COPANT.*
+`,
+
+            lab_analise_solo_fertilidade: `# 🧪 LAUDO DE ANÁLISE QUÍMICA & FERTILIDADE DO SOLO
+
+**Laboratório:** Laboratório de Solos / UEPA Campus Castanhal
+**Disciplina:** Química e Fertilidade do Solo / Física do Solo
+**Interessado / Projeto:** [Nome do Projeto / Produtor] | **Data da Coleta:** [DD/MM/AAAA]
+**Identificação da Amostra:** [Ex: SOLO-TALHAO-02 (Profundidade 0–20 cm)]
+
+---
+
+### 1. Resultados Analíticos do Laboratório
+
+| Atributo / Nutriente | Valor Determinado | Unidade | Nível de Interpretação |
+|---|---|---|---|
+| pH em $H_2O$ (1:2,5) | | - | [Muito Baixo / Baixo / Médio / Alto] |
+| Matéria Orgânica ($MO$) | | g/kg | |
+| Fósforo disponível ($P$ - Mehlich 1) | | mg/dm³ | |
+| Potássio trocável ($K^+$) | | cmol_c/dm³ | |
+| Cálcio trocável ($Ca^{2+}$) | | cmol_c/dm³ | |
+| Magnésio trocável ($Mg^{2+}$) | | cmol_c/dm³ | |
+| Alumínio trocável ($Al^{3+}$) | | cmol_c/dm³ | |
+| Acidez Potencial ($H + Al$) | | cmol_c/dm³ | |
+
+---
+
+### 2. Cálculos de Capacidade de Troca Catiônica (CTC) e Saturações
+
+> **Fórmulas de Fertilidade:**
+> - $SB = Ca^{2+} + Mg^{2+} + K^+ + Na^+ \\quad (cmol_c/dm^3)$
+> - $CTC_{efetiva} (t) = SB + Al^{3+} \\quad (cmol_c/dm^3)$
+> - $CTC_{potencial} (T) = SB + (H + Al) \\quad (cmol_c/dm^3)$
+> - $V (\\%) = \\frac{SB}{T} \\cdot 100 \\quad (\\text{Saturação por Bases})$
+> - $m (\\%) = \\frac{Al^{3+}}{t} \\cdot 100 \\quad (\\text{Saturação por Alumínio})$
+
+- **Soma de Bases ($SB$):** \`[x.xx]\` cmol_c/dm³
+- **CTC Potencial ($T$):** \`[xx.xx]\` cmol_c/dm³
+- **Saturação por Bases ($V$):** \`[xx.x]\` %
+- **Saturação por Alumínio ($m$):** \`[xx.x]\` %
+
+### 3. Recomendação Silvicultural de Calagem e Adubação
+- **Necessidade de Calagem ($NC$):** $NC (t/ha) = \\frac{(V_2 - V_1) \\cdot T}{PRNT} \\implies$ \`[x.xx]\` t/ha de Calcário Dolomítico.
+- **Recomendação de Adubação:** [Formulação N-P-K indicada para plantio florestal nativo ou comercial].
+
+---
+*Análise interpretada para subsidiar plantio e silvicultura aplicada.*
+`,
+
+            lab_ensaio_germinacao: `# 🔬 PROTOCOLO DE ENSAIO DE GERMINAÇÃO & TETRAZÓLIO
+
+**Laboratório:** Laboratório de Sementes Florestais / UEPA
+**Data de Instalação:** [DD/MM/AAAA] | **Data Final:** [DD/MM/AAAA] (Duração: [xx] dias)
+**Espécie:** *[Nome científico]* | **Lote Nº:** [LOTE-SEM-2026]
+**Substrato:** [Sobre papel (SP) / Entre papel (EP) / Rolo de papel germitest / Areia]
+**Temperatura:** [25 °C constante / 20-30 °C alternada] | **Fotoperíodo:** [12h luz / 12h escuro]
+
+---
+
+### 1. Contagens Periódicas de Germinação (4 Repetições de 50 Sementes)
+
+| Dia de Avaliação | Repetição 1 | Repetição 2 | Repetição 3 | Repetição 4 | Total Germinadas no Dia |
+|---|---|---|---|---|---|
+| 3º Dia | | | | | |
+| 7º Dia (Primeira Contagem) | | | | | |
+| 14º Dia | | | | | |
+| 21º Dia (Contagem Final) | | | | | |
+
+---
+
+### 2. Índices de Germinação e Vigor
+- **Germinação Final ($G \\%$):** $\\frac{\\text{Total de Plântulas Normais}}{\\text{Total de Sementes}} \\cdot 100 = $ \`[xx.x]\` %
+- **Índice de Velocidade de Germinação ($IVG = \\sum \\frac{n_i}{t_i}$):** \`[xx.xx]\`
+- **Tempo Médio de Germinação ($TMG$):** \`[xx.x]\` dias
+- **Porcentagem de Plântulas Anormais:** \`[x.x]\` %
+- **Porcentagem de Sementes Mortas / Deterioradas:** \`[x.x]\` %
+
+### 3. Teste de Viabilidade Rápida por Tetrazólio (2,3,5-trifenil cloreto de tetrazólio)
+- **Concentração da Solução:** [0,075% / 0,1% / 0,5%] | **Tempo de Imersão:** [xx horas a 30 °C]
+- **Sementes Viáveis e Vigorosas (Tegumento e Embrião corados em carmim claro uniforme):** \`[xx.x]\` %
+- **Sementes Inviáveis (Áreas vitais necrosadas / descoloridas):** \`[xx.x]\` %
+
+---
+*Ensaio de sementes finalizado conforme as Regras para Análise de Sementes (RAS).*
+`,
+
+            // --------------------------------------------------------------
+            // 6. ORGANIZAÇÃO ACADÊMICA & PRODUTIVIDADE
+            // --------------------------------------------------------------
+            org_planejamento_semanal: `# 📅 PLANEJAMENTO SEMANAL & BLOCOS POMODORO
+
+**Semana:** [DD/MM] a [DD/MM/AAAA] | **Semestre Letivo:** [Semestre Atual - UEPA]
+**Meta Principal da Semana:** [Ex: Finalizar coleta de dados de inventário e rodar ANOVA no R]
+
+---
+
+### 🎯 Prioridades Estratégicas da Semana (Máximo 3)
+1. [ ] [Prioridade 1 - Alta relevância acadêmica]
+2. [ ] [Prioridade 2 - Entrega com prazo fixo]
+3. [ ] [Prioridade 3 - Avanço no TCC / Iniciação Científica]
+
+---
+
+### ⏰ Grade de Blocos de Estudo (Técnica Pomodoro: 50 min foco / 10 min pausa)
+
+| Dia da Semana | Manhã | Tarde | Noite | Pomodoros Realizados |
+|---|---|---|---|---|
+| **Segunda-feira** | [Disciplina A] | [Campo / Laboratório] | [Revisão teórica] | [ ] [ ] [ ] [ ] |
+| **Terça-feira** | [Disciplina B] | [Processamento QGIS] | [Leituras TCC] | [ ] [ ] [ ] [ ] |
+| **Quarta-feira** | [Aulas teóricas] | [Plantão de dúvidas] | [Escrita acadêmica] | [ ] [ ] [ ] [ ] |
+| **Quinta-feira** | [Aulas teóricas] | [Laboratório LAMEF] | [Exercícios R] | [ ] [ ] [ ] [ ] |
+| **Sexta-feira** | [Aulas teóricas] | [Sistematização dados] | [Organização semanal] | [ ] [ ] [ ] [ ] |
+| **Sábado** | [Estudo aprofundado] | [Lazer / Descanso] | [Livre] | [ ] [ ] |
+
+---
+
+### 📝 Autoavaliação de Produtividade do Final de Semana
+- **O que funcionou bem:** [ ]
+- **Onde houve dispersão ou procrastinação:** [ ]
+- **Ajuste para a próxima semana:** [ ]
+
+---
+*Planejamento semanal registrado para controle pessoal de rotina.*
+`,
+
+            org_horas_complementares: `# 🎓 RASTREADOR DE ATIVIDADES COMPLEMENTARES (PPC UEPA)
+
+**Discente:** [Nome Completo] | **Matrícula:** [Nº de Matrícula]
+**Exigência Regimental (Resolução 03/2022 CCNT):** Mínimo de 160 Horas Totais
+
+---
+
+### 1. Modalidade Ensino (Exigência: 40 Horas Máximas)
+- [ ] Monitoria em disciplina da UEPA (40h/semestre)
+- [ ] Estágio Extracurricular supervisionado (30h a cada 60h realizadas)
+- [ ] Cursos de extensão, formação ou idiomas (20h a cada 12h de curso)
+- [ ] Disciplinas cursadas em outros cursos de graduação (20h/disciplina)
+- [ ] Instrutor de minicursos (15h) e oficinas (10h)
+**Total Acumulado em Ensino:** \`[xx]\` / 40 horas
+
+---
+
+### 2. Modalidade Pesquisa (Exigência: 60 Horas Máximas)
+- [ ] Bolsista de Iniciação Científica (PIBIC/CNPq/FAPESPA) (60h/ano)
+- [ ] Voluntário de Pesquisa (PIVIC) orientado por docente (30h/semestre)
+- [ ] Participação em Grupo de Pesquisa institucionalizado (30h/ano)
+- [ ] Artigo publicado em periódico: Qualis A (60h) / Qualis B (45h) / Qualis C (30h)
+- [ ] Resumo expandido em congresso nacional (20h) / internacional (30h)
+- [ ] Resumo simples em evento regional (10h) / nacional (15h)
+- [ ] Trabalho completo em anais com ISBN (30h)
+**Total Acumulado em Pesquisa:** \`[xx]\` / 60 horas
+
+---
+
+### 3. Modalidade Extensão (Exigência: 60 Horas Máximas)
+- [ ] Participação em Projetos de Extensão institucionalizados (20h/projeto)
+- [ ] Ações voluntárias sociais (10h/ação)
+- [ ] Representação estudantil em órgãos colegiados da UEPA / D.A. (20h/ano)
+- [ ] Atuação como membro ativo de Empresa Júnior Florestal (20h/ano)
+- [ ] Organização de semanas acadêmicas, simpósios e eventos (20h/evento)
+**Total Acumulado em Extensão:** \`[xx]\` / 60 horas
+
+---
+
+### 📊 Consolidação Geral do Portfólio
+- **Horas Homologadas Totais:** \`[xxx]\` / 160 horas
+- **Status do Requerimento na CRCA:** [ ] Em andamento [ ] Documentação protocolada [ ] 100% Integralizado
+
+---
+*Controle de horas complementares atualizado em [DD/MM/AAAA].*
+`,
+
+            org_diario_orientacao: `# 👥 DIÁRIO DE ORIENTAÇÃO & REUNIÃO DE PESQUISA
+
+**Projeto / TCC:** [Título do Projeto / TCC]
+**Orientador:** Prof. Dr. [Nome do Orientador] | **Coorientador:** [Nome]
+**Data da Reunião:** [DD/MM/AAAA] | **Horário:** [HH:MM] às [HH:MM]
+**Número do Encontro:** Reunião Nº [xx]
+
+---
+
+### 1. Pauta da Reunião e Entregas do Período
+- [ ] Apresentação dos dados coletados em campo / laboratório.
+- [ ] Discussão dos resultados das análises estatísticas rodadas no R.
+- [ ] Revisão do texto da seção de Metodologia / Discussão.
+
+### 2. Feedbacks e Apontamentos do Orientador
+- **Pontos Fortes Identificados:** [Aspectos elogiados no texto ou na condução do trabalho].
+- **Correções Metodológicas Exigidas:** [Ajustes de amostragem, reanálise estatística, reescrita de parágrafos, adequação ABNT].
+- **Sugestões de Leituras e Referências:** [Autores e artigos indicados pelo professor].
+
+### 3. Plano de Ação e Metas para a Próxima Reunião
+| Tarefa / Meta Técnica | Prazo Limite | Status |
+|---|---|---|
+| 1. Reestruturar a tabela de resultados | [DD/MM] | [ ] Pendente |
+| 2. Redigir a seção de Discussão comparada | [DD/MM] | [ ] Pendente |
+| 3. Atualizar as referências conforme ABNT | [DD/MM] | [ ] Pendente |
+
+- **Data Fixada para a Próxima Reunião:** [DD/MM/AAAA às HH:MM]
+
+---
+*Registro de orientação arquivado para acompanhamento do TCC.*
+`,
+
+            // --------------------------------------------------------------
+            // 7. CORRESPONDÊNCIA & REQUERIMENTOS
+            // --------------------------------------------------------------
+            email_formal_docente: `Assunto: Engenharia Florestal — Solicitação de [Assunto: Orientação / Dúvida / Declaração] — [Seu Nome Completo]
+
+Prezado(a) Professor(a) Dr(a). [Sobrenome do Docente],
+
+Espero que este e-mail o(a) encontre bem.
+
+Meu nome é [Seu Nome Completo], discente regularmente matriculado no [xxº] semestre do curso de Bacharelado em Engenharia Florestal da Universidade do Estado do Pará (UEPA) — Campus Castanhal (Matrícula: [Número de Matrícula]).
+
+Entro em contato cordialmente para [apresentar o motivo direto em 1 frase. Ex: solicitar uma breve reunião para alinhamento sobre o cronograma de coleta de dados do meu Projeto Final de Curso / apresentar minha justificativa referente à ausência na aula prática do dia DD/MM].
+
+[Parágrafo com breve contextualização dos fatos, mencionando arquivos anexados ou detalhes relevantes, se aplicável].
+
+Agradeço imensamente pela atenção e coloco-me à inteira disposição para eventuais esclarecimentos.
+
+Respeitosamente,
+
+[Seu Nome Completo]
+Discente de Engenharia Florestal — UEPA Campus Castanhal
+Telefone: (91) 9xxxx-xxxx | E-mail: seuemail@uepa.br
+`,
+
+            req_institucional_uepa: `# ILUSTRÍSSIMO(A) SENHOR(A) COORDENADOR(A) DO CURSO DE ENGENHARIA FLORESTAL DA UNIVERSIDADE DO ESTADO DO PARÁ — CAMPUS CASTANHAL
+
+**Requerente:** [Seu Nome Completo]
+**Matrícula:** [Número da Matrícula] | **Semestre:** [xxº Semestre]
+**E-mail:** [seuemail@uepa.br] | **Telefone:** (91) 9xxxx-xxxx
+
+---
+
+### REQUERIMENTO TÉCNICO-ADMINISTRATIVO
+
+Vem, mui respeitosamente, à presença de Vossa Senhoria requerer:
+
+[ ] **Aproveitamento de Atividades Complementares:** Homologação de certificado(s) anexo(s), totalizando [xx] horas na modalidade [Ensino / Pesquisa / Extensão], em cumprimento à Resolução nº 03/2022 do Colegiado de Curso.
+[ ] **Justificativa de Falta em Avaliação/Campo:** Justificativa de ausência fundamentada no atestado médico / documento comprobatório em anexo, referente à disciplina [Nome da Disciplina] no dia [DD/MM/AAAA].
+[ ] **Declaração de Vínculo e Atividades de Campo:** Emissão de declaração institucional para acesso a Unidade de Conservação / Empresa Florestal com a finalidade de realização de amostragem de dados.
+[ ] **Outros:** [Descrever com exatidão a solicitação].
+
+### Justificativa do Pleito
+[Exposição sumária, clara e formal das razões que fundamentam o presente pedido].
+
+Nestes termos,
+Pede e espera deferimento.
+
+Castanhal - PA, [DD] de [Mês] de [AAAA].
+
+
+________________________________________________
+**Assinatura do Discente Requerente**
+`,
+
+            // --------------------------------------------------------------
+            // 8. ESTATÍSTICA & CIÊNCIA DE DADOS FLORESTAIS
+            // --------------------------------------------------------------
+            estat_script_r_anova: `# 📊 ROTEIRO & SCRIPT EM R — ANOVA & TESTE DE TUKEY
+
+**Projeto / Disciplina:** Métodos Estatísticos Aplicados à Ciência Florestal / Silvicultura
+**Ambiente de Execução:** RStudio / Posit Cloud
+**Objetivo:** Avaliar o efeito de diferentes tratamentos silviculturais no crescimento de mudas.
+
+---
+
+### 1. Script Estruturado em R
+
+\`\`\`R
+# ================================================================
+# SCRIPT: ANÁLISE DE VARIÂNCIA (ANOVA) & TESTE DE TUKEY
+# DISCENTE: [Seu Nome] - ENGENHARIA FLORESTAL UEPA
+# ================================================================
+
+# 1. Carregamento de Pacotes
+if(!require(agricolae)) install.packages("agricolae")
+if(!require(tidyverse)) install.packages("tidyverse")
+library(agricolae)
+library(tidyverse)
+
+# 2. Entrada e Estruturação dos Dados
+# Exemplo: Tratamentos (Substratos 1, 2, 3) e Altura das mudas (cm)
+dados <- data.frame(
+  Tratamento = as.factor(rep(c("Substrato_A", "Substrato_B", "Substrato_C"), each = 10)),
+  Altura = c(12.5, 13.1, 12.8, 14.0, 13.5, 12.9, 13.2, 13.8, 14.1, 13.0,
+             15.2, 16.0, 15.8, 16.5, 15.9, 16.2, 15.5, 16.8, 16.1, 15.7,
+             10.2, 11.0, 10.5, 11.2, 10.8, 10.9, 11.5, 10.1, 11.3, 10.6)
+)
+
+# 3. Análise Exploratória e Estatísticas Descritivas
+resumo <- dados %>%
+  group_by(Tratamento) %>%
+  summarise(
+    Media = mean(Altura),
+    DesvioPadrao = sd(Altura),
+    CV = (sd(Altura)/mean(Altura))*100,
+    N = n()
+  )
+print(resumo)
+
+# 4. Ajuste do Modelo Linear e ANOVA
+modelo <- lm(Altura ~ Tratamento, data = dados)
+anova_resultado <- anova(modelo)
+print(anova_resultado)
+
+# 5. Teste de Normalidade dos Resíduos (Shapiro-Wilk)
+shapiro_teste <- shapiro.test(residuals(modelo))
+print(shapiro_teste)
+
+# 6. Teste de Homogeneidade de Variâncias (Bartlett)
+bartlett_teste <- bartlett.test(Altura ~ Tratamento, data = dados)
+print(bartlett_teste)
+
+# 7. Teste de Comparações Múltiplas de Tukey (HSD)
+teste_tukey <- HSD.test(modelo, "Tratamento", group = TRUE, console = TRUE)
+\`\`\`
+
+---
+
+### 2. Interpretação dos Resultados Estatísticos
+- **Valor-p da ANOVA ($p < 0,05$):** [ ] Rejeita-se $H_0$ (há diferença significativa entre os tratamentos).
+- **Homogeneidade e Normalidade atendidas?** [ ] Sim ($p > 0,05$ nos testes de Shapiro e Bartlett).
+- **Grupos do Teste de Tukey:**
+  - Grupo A (Melhor desempenho): [Nome do Tratamento com maior média]
+  - Grupo B: [Nome do Tratamento intermediário]
+  - Grupo C: [Nome do Tratamento inferior]
+
+---
+*Script documentado e pronto para reprodução científica.*
+`,
+
+            estat_regressao_hipsometrica: `# 📈 AJUSTE DE MODELOS HIPSOMÉTRICOS & VOLUMÉTRICOS (R)
+
+**Disciplina:** Dendrometria Florestal / Inventário Florestal
+**Base de Dados:** [Nome da Parcela / Povoamento Florestal]
+**Variáveis:** Diâmetro a 1,30 m ($DAP$ em cm) e Altura Total ($H_t$ em m)
+
+---
+
+### 1. Modelos Hipsométricos Clássicos Avaliados
+
+> **Equações:**
+> 1. **Modelo Linear Simples:** $H_t = \\beta_0 + \\beta_1 \\cdot DAP + \\varepsilon$
+> 2. **Modelo de Curtis (Logarítmico):** $\\ln(H_t) = \\beta_0 + \\beta_1 \\cdot \\left(\\frac{1}{DAP}\\right) + \\varepsilon$
+> 3. **Modelo de Stoffels (Potencial / Alométrico):** $\\ln(H_t) = \\beta_0 + \\beta_1 \\cdot \\ln(DAP) + \\varepsilon$
+> 4. **Modelo de Henriksen:** $H_t = \\beta_0 + \\beta_1 \\cdot \\ln(DAP) + \\varepsilon$
+
+---
+
+### 2. Tabela Comparativa de Critérios de Seleção de Modelos
+
+| Modelo Hipsométrico | $\\beta_0$ | $\\beta_1$ | $R^2_{ajustado}$ | $S_{yx}$ (Erro Padrão da Estimativa em m) | $S_{yx} \\%$ | F-Calculado |
+|---|---|---|---|---|---|---|
+| 1. Linear | | | | | | |
+| 2. Curtis | | | | | | |
+| 3. Stoffels | | | | | | |
+| 4. Henriksen | | | | | | |
+
+*Nota:* Para modelos logarítmicos, aplicar o Fator de Correção de Meyer ($FC = e^{\\frac{S_{yx}^2}{2}}$) ao deslogar a variável estimada.
+
+### 3. Modelo Escolhido e Equação Final
+- **Modelo Selecionado:** [Nome do Modelo com maior $R^2_{ajustado}$ e menor $S_{yx}\\%$]
+- **Equação Parametrizada:**
+$$
+H_t = [\\beta_0] + [\\beta_1] \\cdot \\ln(DAP)
+$$
+
+---
+*Ajuste hipsométrico validado para estimativa de alturas no inventário.*
+`,
+
+            // --------------------------------------------------------------
+            // 9. TRABALHO DE CONCLUSÃO DE CURSO (TCC)
+            // --------------------------------------------------------------
+            tcc_diario_escrita: `# 🖋️ DIÁRIO DE ESCRITA & AVANÇO DO TCC
+
+**Título Provisório:** [Título do Projeto Final de Curso / TCC]
+**Meta Diária:** [Ex: Redigir 2 páginas da Discussão / Tratar 50 observações de campo]
+**Data:** [DD/MM/AAAA]
+
+---
+
+### 1. Foco da Sessão de Escrita
+- **Capítulo / Seção Atual:** [ ] Introdução [ ] Referencial Teórico [ ] Metodologia [ ] Resultados [ ] Discussão [ ] Conclusão
+- **Pergunta Central a Responder Hoje:** [Qual dúvida científica o texto de hoje soluciona?]
+
+### 2. Produção e Parágrafos Redigidos
+[Espaço livre para rascunho, inserção de dados comparativos ou transcrição de reflexões teóricas imediatas].
+
+### 3. Rastreamento de Bloqueios e Dúvidas
+- **Onde o raciocínio travou?** [Falta de dados / Dificuldade de articular duas teorias / Dúvida metodológica].
+- **Ação imediata para destravar:** [Consultar artigo chave / Agendar conversa rápida com orientador / Rascunhar tópicos em tópicos frasais].
+
+---
+*Registro diário para manutenção de consistência na produção acadêmica.*
+`,
+
+            tcc_checklist_pre_banca: `# 🎓 CHECKLIST DE REVISÃO PRÉ-BANCA (TCC UEPA)
+
+**Discente:** [Nome Completo] | **Orientador:** Prof. Dr. [Nome]
+**Data Prevista da Defesa:** [DD/MM/AAAA às HH:MM]
+**Local:** [Auditório CCNT / Sala de Reuniões / Plataforma Virtual]
+
+---
+
+### 📋 1. Conformidade Institucional & Normativa (Resolução 02/2021)
+- [ ] Carta de aceite de orientação assinada e arquivada na Coordenação
+- [ ] Envio do documento final para os membros da banca com no mínimo 25 dias de antecedência
+- [ ] Portaria de designação de banca examinadora emitida pela Coordenação
+- [ ] Versão em conformidade estrita com as normas da ABNT (ou normas da revista Qualis A/B1)
+
+### 📄 2. Revisão Textual e Elementos Estruturais
+- [ ] Resumo e Abstract com palavras-chave condizentes (DeCS/Agrovoc)
+- [ ] Introdução contendo problema explícito, hipótese testável e justificativa regional
+- [ ] Metodologia reprodutível com descrição de equipamentos, análises estatísticas e SIG
+- [ ] Resultados acompanhados de gráficos de alta resolução e tabelas autoexplicativas
+- [ ] Discussão confrontando os dados com a literatura amazônica recente
+- [ ] Conclusão respondendo diretamente aos objetivos sem extrapolações
+
+### 🖥️ 3. Roteiro e Slides de Apresentação Oral
+- [ ] Apresentação ajustada rigorosamente para o tempo limite (15 a 20 minutos)
+- [ ] Máximo de 15 a 20 slides (1 slide por minuto de apresentação)
+- [ ] Contraste visual adequado e fontes legíveis para projeção
+- [ ] Teste prévio de equipamento (Passador de slides, áudio, projetor HDMI)
+
+---
+*Checklist verificado e validado para a sessão pública de defesa.*
+`,
+
+            tcc_matriz_correcoes_banca: `# 📑 MATRIZ DE CORREÇÕES PÓS-BANCA DE TCC
+
+**Discente:** [Nome Completo] | **Data da Defesa:** [DD/MM/AAAA]
+**Prazo Limite para Entrega da Versão Final:** [Data da Defesa + 15 dias corridos]
+
+---
+
+### 1. Membros da Banca Examinadora
+- **Presidente / Orientador:** Prof. Dr. [Nome]
+- **Avaliador(a) Interno(a):** Prof. Dr. [Nome]
+- **Avaliador(a) Externo(a):** Dr(a). [Nome / Instituição: Embrapa / Museu Goeldi / UFRA]
+
+---
+
+### 2. Matriz Sistemática de Alterações Solicitadas
+
+| Item | Membro Demandante | Seção / Página | Alteração Solicitada pela Banca | Ação Executada no Texto Definitivo | Status |
+|---|---|---|---|---|---|
+| 01 | Prof. [Nome] | Metodologia (p. 22) | Detalhar a precisão do GPS e o datum utilizado | Inserido SIRGAS 2000 e erro médio de 1,8 m | [x] Atendido |
+| 02 | Prof. [Nome] | Resultados (p. 35) | Adicionar letras do teste de Tukey na Figura 4 | Gráfico atualizado no R com as letras dos grupos | [x] Atendido |
+| 03 | Prof. [Nome] | Discussão (p. 42) | Incluir citação sobre dinâmica de clareiras | Inserida referência de artigo regional recente | [x] Atendido |
+| 04 | | | | | [ ] Pendente |
+
+---
+
+### 3. Encaminhamentos Finais de Diplomação
+- [ ] Conferência final do texto com o orientador e assinatura da Folha de Aprovação.
+- [ ] Solicitação de Ficha Catalográfica junto à Biblioteca Central da UEPA.
+- [ ] Envio do arquivo PDF definitivo no repositório institucional em até 25 dias.
+
+---
+*Matriz preenchida para garantia de 100% de atendimento às exigências da banca.*
+`
+
         };
 
         // ===================================================
         // GERAÇÃO DINÂMICA PWA
         // ===================================================
         const manifest = {
-            name: "Bloco de Notas Acadêmico", short_name: "Notepad Acad", description: "Anotações e Relatórios.",
+            name: "MN Field Notebook", short_name: "MN Notebook", description: "Anotações e Relatórios.",
             display: "standalone", start_url: location.href, background_color: "#ffffff", theme_color: "#0074e0",
             icons: [{ src: "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230074e0'%3E%3Cpath d='M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z'/%3E%3C/svg%3E", sizes: "192x192", type: "image/svg+xml" }]
         };
@@ -395,6 +1826,7 @@
         const CONFIG = {
             STORAGE_KEY_DOCS: 'notepad_pro_docs', STORAGE_KEY_ACTIVE: 'notepad_pro_activeId',
             STORAGE_KEY_THEME: 'notepad_pro_Theme', STORAGE_KEY_FONT: 'notepad_pro_Font',
+            STORAGE_KEY_FOCUS: 'notepad_pro_Focus',
             THEMES: ['theme-light', 'theme-dark', 'theme-sepia'],
             FONTS: ['font-sans-serif', 'font-serif', 'font-mono', 'font-writer', 'font-dev']
         };
@@ -435,6 +1867,12 @@
             // Variáveis Motor de Voz Silencioso e Zoom
             recognition: null, isRecording: false, manualStop: false,
             currentZoom: 15, initialTouchDist: null, initialFontSize: 15,
+
+            // Estado do Modo Foco
+            focusMode: false,
+
+            // Estado do Modo Discreto (Wake Lock + escurecimento de tela)
+            discreetMode: false, wakeLock: null,
             
             init() {
                 const { documents, activeDocId } = StorageManager.loadDocs();
@@ -448,6 +1886,9 @@
                 const savedTheme = localStorage.getItem(CONFIG.STORAGE_KEY_THEME) || CONFIG.THEMES[0];
                 this.themeIdx = CONFIG.THEMES.indexOf(savedTheme) > -1 ? CONFIG.THEMES.indexOf(savedTheme) : 0;
                 this.applyThemeClass();
+
+                this.focusMode = localStorage.getItem(CONFIG.STORAGE_KEY_FOCUS) === '1';
+                document.body.classList.toggle('focus-mode', this.focusMode);
 
                 this.initSpeechRecognition();
                 this.initZoomEvents();
@@ -556,44 +1997,232 @@
                 this.updateStats();
             },
 
-            // --- SUPER BUSCA ITERATIVA ---
-            doSearch() {
+            // --- LOCALIZAR E SUBSTITUIR (nova versão) ---
+            escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); },
+            getSearchFlags() { return document.getElementById('searchCaseSensitive').checked ? 'g' : 'gi'; },
+            countMatches(text, term) {
+                if (!term) return 0;
+                try {
+                    const re = new RegExp(this.escapeRegExp(term), this.getSearchFlags());
+                    const m = text.match(re);
+                    return m ? m.length : 0;
+                } catch(e) { return 0; }
+            },
+
+            updateSearchUI() {
                 const term = document.getElementById('searchInput').value;
-                if(!term) return;
-                
-                const text = this.editor.value.toLowerCase();
-                const searchLower = term.toLowerCase();
-                
-                let startIdx = text.indexOf(searchLower, this.editor.selectionEnd);
-                
-                if(startIdx !== -1) {
-                    this.highlightAndScroll(startIdx, term.length);
+                const countEl = document.getElementById('searchMatchCount');
+                const tabResultsEl = document.getElementById('searchTabResults');
+                const doc = this.getActiveDoc();
+
+                if (!term || !doc) {
+                    countEl.textContent = '0 de 0';
+                    tabResultsEl.style.display = 'none';
+                    tabResultsEl.innerHTML = '';
                     return;
                 }
 
-                const currentDocIndex = this.documents.findIndex(d => d.id === this.activeDocId);
-                for (let i = 1; i < this.documents.length; i++) {
-                    const nextIndex = (currentDocIndex + i) % this.documents.length;
-                    const doc = this.documents[nextIndex];
-                    const docText = doc.content.toLowerCase();
-                    const foundIdx = docText.indexOf(searchLower, 0);
+                const currentCount = this.countMatches(this.editor.value, term);
+                let currentPos = 0;
+                if (currentCount > 0) {
+                    const before = this.editor.value.substring(0, this.editor.selectionStart);
+                    currentPos = Math.min(this.countMatches(before, term) + 1, currentCount);
+                }
+                countEl.textContent = `${currentCount > 0 ? currentPos : 0} de ${currentCount} (nesta aba)`;
 
-                    if (foundIdx !== -1) {
-                        this.switchToDoc(doc.id); 
-                        this.highlightAndScroll(foundIdx, term.length);
-                        UI.showSwipeToast(`Palavra encontrada na aba: ${doc.title}`);
-                        return;
+                tabResultsEl.innerHTML = '';
+                let hasOther = false;
+                this.documents.forEach(d => {
+                    if (d.id === this.activeDocId) return;
+                    const c = this.countMatches(d.content, term);
+                    if (c > 0) {
+                        hasOther = true;
+                        const row = document.createElement('button');
+                        row.className = 'template-item';
+                        row.style.padding = '8px 10px';
+                        row.innerHTML = `<strong style="font-size:12px;">${d.title}</strong><span>${c} ocorrência${c > 1 ? 's' : ''}</span>`;
+                        row.addEventListener('click', () => {
+                            this.switchToDoc(d.id);
+                            this.jumpToFirstMatch(term);
+                            this.updateSearchUI();
+                        });
+                        tabResultsEl.appendChild(row);
+                    }
+                });
+                tabResultsEl.style.display = hasOther ? 'flex' : 'none';
+            },
+
+            jumpToFirstMatch(term) {
+                try {
+                    const re = new RegExp(this.escapeRegExp(term), this.getSearchFlags());
+                    const match = re.exec(this.editor.value);
+                    if (match) this.highlightAndScroll(match.index, match[0].length);
+                } catch(e) {}
+            },
+
+            doSearch(direction = 1) {
+                const term = document.getElementById('searchInput').value;
+                if (!term) return;
+                let re;
+                try { re = new RegExp(this.escapeRegExp(term), this.getSearchFlags()); } catch(e) { return; }
+                const text = this.editor.value;
+
+                if (direction === 1) {
+                    re.lastIndex = this.editor.selectionEnd;
+                    const match = re.exec(text);
+                    if (match) { this.highlightAndScroll(match.index, match[0].length); this.updateSearchUI(); return; }
+                } else {
+                    re.lastIndex = 0;
+                    let m, lastMatch = null;
+                    while ((m = re.exec(text)) !== null) {
+                        if (m.index >= this.editor.selectionStart) break;
+                        lastMatch = m;
+                        if (m.index === re.lastIndex) re.lastIndex++;
+                    }
+                    if (lastMatch) { this.highlightAndScroll(lastMatch.index, lastMatch[0].length); this.updateSearchUI(); return; }
+                }
+
+                if (direction === 1) {
+                    const currentDocIndex = this.documents.findIndex(d => d.id === this.activeDocId);
+                    for (let i = 1; i < this.documents.length; i++) {
+                        const nextIndex = (currentDocIndex + i) % this.documents.length;
+                        const doc = this.documents[nextIndex];
+                        let docRe;
+                        try { docRe = new RegExp(this.escapeRegExp(term), this.getSearchFlags()); } catch(e) { continue; }
+                        const match = docRe.exec(doc.content);
+                        if (match) {
+                            this.switchToDoc(doc.id);
+                            this.highlightAndScroll(match.index, match[0].length);
+                            UI.showSwipeToast(`Encontrado na aba: ${doc.title}`);
+                            this.updateSearchUI();
+                            return;
+                        }
                     }
                 }
 
-                startIdx = text.indexOf(searchLower, 0);
-                if(startIdx !== -1) {
-                    this.highlightAndScroll(startIdx, term.length);
-                    UI.showSwipeToast("Fim do documento. Busca reiniciada do topo.");
+                let wrapRe;
+                try { wrapRe = new RegExp(this.escapeRegExp(term), this.getSearchFlags()); } catch(e) { return; }
+                if (direction === 1) {
+                    const match = wrapRe.exec(this.editor.value);
+                    if (match) {
+                        this.highlightAndScroll(match.index, match[0].length);
+                        UI.showSwipeToast('Fim do documento. Busca reiniciada do topo.');
+                    } else {
+                        UI.showSwipeToast('Texto não encontrado em nenhuma aba.');
+                        document.getElementById('searchLineInfo').textContent = '';
+                    }
                 } else {
-                    UI.showSwipeToast("Texto não encontrado em nenhuma aba.");
-                    document.getElementById('searchLineInfo').textContent = "";
+                    let m, lastMatch = null;
+                    while ((m = wrapRe.exec(this.editor.value)) !== null) {
+                        lastMatch = m;
+                        if (m.index === wrapRe.lastIndex) wrapRe.lastIndex++;
+                    }
+                    if (lastMatch) {
+                        this.highlightAndScroll(lastMatch.index, lastMatch[0].length);
+                        UI.showSwipeToast('Início do documento. Busca reiniciada do final.');
+                    } else {
+                        UI.showSwipeToast('Texto não encontrado em nenhuma aba.');
+                    }
                 }
+                this.updateSearchUI();
+            },
+
+            // --- Guarda de segurança: evita apagar texto por engano quando o
+            // campo "Substituir por" está vazio (isso corta o termo encontrado
+            // sem deixar rastro visível na hora). Sempre pede confirmação explícita. ---
+            confirmEmptyReplacement(term, scopeLabel) {
+                return confirm(`O campo "Substituir por" está vazio.\n\nIsso vai APAGAR todas as ocorrências de "${term}" ${scopeLabel}, sem colocar nada no lugar.\n\nDeseja continuar?`);
+            },
+
+            replaceOne() {
+                const term = document.getElementById('searchInput').value;
+                const replacement = document.getElementById('replaceInput').value;
+                if (!term) return;
+                if (!replacement && !this.confirmEmptyReplacement(term, 'nesta ocorrência')) return;
+
+                const start = this.editor.selectionStart, end = this.editor.selectionEnd;
+                const selected = this.editor.value.substring(start, end);
+                const flags = this.getSearchFlags().replace('g', '');
+                let isMatch = false;
+                try { isMatch = new RegExp('^' + this.escapeRegExp(term) + '$', flags).test(selected); } catch(e) {}
+
+                if (isMatch) {
+                    const val = this.editor.value;
+                    this.editor.value = val.substring(0, start) + replacement + val.substring(end);
+                    this.editor.selectionStart = this.editor.selectionEnd = start + replacement.length;
+                    this.saveState(); this.pushHistory(); this.updateStats();
+                    UI.showSwipeToast('✓ Substituído');
+                }
+                this.doSearch(1);
+            },
+
+            replaceAllInDoc() {
+                const term = document.getElementById('searchInput').value;
+                const replacement = document.getElementById('replaceInput').value;
+                if (!term) return;
+                let re;
+                try { re = new RegExp(this.escapeRegExp(term), this.getSearchFlags()); } catch(e) { return; }
+                const count = this.countMatches(this.editor.value, term);
+                if (count === 0) { UI.showSwipeToast('Nada para substituir nesta aba.'); return; }
+                if (!replacement && !this.confirmEmptyReplacement(term, `(${count} ocorrência${count > 1 ? 's' : ''}) nesta aba`)) return;
+
+                this.editor.value = this.editor.value.replace(re, replacement);
+                this.saveState(); this.pushHistory(); this.updateStats();
+                UI.showSwipeToast(`✓ ${count} substituição${count > 1 ? 'ões' : ''} feita${count > 1 ? 's' : ''} nesta aba`);
+                this.updateSearchUI();
+            },
+
+            // --- Substituir em Todas as Abas: percorre TODOS os documentos abertos,
+            // não apenas a aba ativa. Útil para grandes volumes de dados/anotações
+            // espalhados em várias abas (ex.: corrigir um termo em todo o caderno). ---
+            replaceAllInAllTabs() {
+                const term = document.getElementById('searchInput').value;
+                const replacement = document.getElementById('replaceInput').value;
+                if (!term) return;
+
+                let re;
+                try { re = new RegExp(this.escapeRegExp(term), this.getSearchFlags()); } catch(e) { return; }
+
+                // Garante que a aba ativa está com o conteúdo mais recente antes de contar.
+                const activeDoc = this.getActiveDoc();
+                if (activeDoc) activeDoc.content = this.editor.value;
+
+                const totalCount = this.documents.reduce((sum, d) => sum + this.countMatches(d.content, term), 0);
+                if (totalCount === 0) { UI.showSwipeToast('Nada para substituir em nenhuma aba.'); return; }
+
+                const tabsAffectedCount = this.documents.filter(d => this.countMatches(d.content, term) > 0).length;
+                const scopeLabel = `(${totalCount} ocorrência${totalCount > 1 ? 's' : ''}) em ${tabsAffectedCount} aba${tabsAffectedCount > 1 ? 's' : ''}`;
+
+                if (!replacement) {
+                    if (!this.confirmEmptyReplacement(term, scopeLabel)) return;
+                } else {
+                    if (!confirm(`Substituir "${term}" por "${replacement}" em TODAS as ${tabsAffectedCount} aba${tabsAffectedCount > 1 ? 's' : ''} onde ocorre (${totalCount} ocorrência${totalCount > 1 ? 's' : ''} no total)?`)) return;
+                }
+
+                let tabsAffected = 0;
+                this.documents.forEach(d => {
+                    const c = this.countMatches(d.content, term);
+                    if (c === 0) return;
+                    tabsAffected++;
+                    const newContent = d.content.replace(re, replacement);
+                    d.content = newContent;
+                    if (d.isAutoTitled) {
+                        const lines = newContent.trim().split('\n');
+                        d.title = lines[0] ? (lines[0].substring(0, 25) + (lines[0].length > 25 ? '...' : '')) : 'Nova Anotação';
+                    }
+                    if (d.history[d.historyIdx] !== newContent) {
+                        d.history = d.history.slice(0, d.historyIdx + 1);
+                        d.history.push(newContent);
+                        if (d.history.length > 50) d.history.shift(); else d.historyIdx++;
+                    }
+                    if (d.id === this.activeDocId) {
+                        this.editor.value = newContent;
+                    }
+                });
+
+                this.saveState(); this.updateStats(); this.renderTabs();
+                UI.showSwipeToast(`✓ ${totalCount} substituição${totalCount > 1 ? 'ões' : ''} em ${tabsAffected} aba${tabsAffected > 1 ? 's' : ''}`);
+                this.updateSearchUI();
             },
 
             highlightAndScroll(startIdx, length) {
@@ -644,6 +2273,7 @@
                 this.currentZoom = Math.max(10, Math.min(50, newSize));
                 this.editor.style.fontSize = `${this.currentZoom}px`;
                 document.getElementById('zoomInfo').textContent = Math.round(this.currentZoom) + 'px';
+                if (window.LineGutter) LineGutter.update();
             },
 
             initZoomEvents() {
@@ -691,10 +2321,21 @@
                 if (!SpeechRecognition) { document.getElementById('btn-voice').style.display = 'none'; return; }
                 
                 this.recognition = new SpeechRecognition();
-                this.recognition.continuous = false; 
-                this.recognition.interimResults = false; 
+                // continuous+interim: fala fica "aberta" (sem parar sozinha a cada
+                // frase) e mostra o texto sendo escrito ENQUANTO você fala, em vez
+                // de só inserir no final. Isso também elimina a maior parte dos
+                // cortes perceptíveis, já que o motor não precisa mais reabrir a
+                // sessão a cada frase — só quando o navegador realmente encerrar.
+                this.recognition.continuous = true;
+                this.recognition.interimResults = true;
                 this.recognition.lang = 'pt-BR';
-                this.manualStop = false; 
+                this.manualStop = false;
+
+                // Prévia ao vivo: posição/tamanho do trecho ainda não confirmado
+                this.interimStart = null;
+                this.interimLength = 0;
+                this.interimPrefix = '';
+                this.lastInterimRaw = '';
 
                 this.recognition.onstart = () => {
                     this.isRecording = true;
@@ -702,32 +2343,23 @@
                 };
 
                 this.recognition.onresult = (event) => {
-                    let finalSegment = event.results[0][0].transcript;
-                    let cleanText = finalSegment.trim();
-                    
-                    // Regex robusto para pontuação e quebras de linha/parágrafo
-                    let processed = cleanText
-                        .replace(/\bvírgula\b/gi, ',')
-                        .replace(/\bponto final\b/gi, '.')
-                        .replace(/\bponto e vírgula\b/gi, ';')
-                        .replace(/\bdois pontos\b/gi, ':')
-                        .replace(/\bponto de interroga[çc][ãa]o\b/gi, '?')
-                        .replace(/\bponto de exclama[çc][ãa]o\b/gi, '!')
-                        .replace(/\bnova linha\b/gi, '\n')
-                        .replace(/\bnovo par[áa]grafo\b/gi, '\n\n')
-                        .replace(/\s+([,\.;:?!])/g, '$1'); 
-                    
-                    let prefix = "";
-                    if (this.editor.selectionStart > 0) {
-                        const lastChar = this.editor.value.charAt(this.editor.selectionStart - 1);
-                        if (!/[\s\n]/.test(lastChar) && !/^[\s,\.;:?!\n]/.test(processed)) {
-                            prefix = " ";
-                        }
-                    }
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const result = event.results[i];
+                        const raw = result[0].transcript;
+                        this.lastInterimRaw = raw;
+                        this.updateInterimPreview(this.applyVoiceCommands(raw));
 
-                    const start = this.editor.selectionStart;
-                    this.insertTextAtCursor(prefix + processed);
-                    this.editor.selectionStart = this.editor.selectionEnd = start + prefix.length + processed.length;
+                        // Trava por inatividade (debounce): alguns reconhecedores
+                        // (comum no Chrome para Android) reenviam a MESMA frase
+                        // "do zero" várias vezes durante uma única fala, mesmo já
+                        // marcando isFinal. Se travássemos a posição na hora,
+                        // cada reenvio virava texto duplicado. Em vez disso, só
+                        // avançamos de vez o cursor depois de um instante sem
+                        // nenhuma atualização nova — até lá, tudo se sobrescreve
+                        // no mesmo lugar.
+                        clearTimeout(this._lockTimer);
+                        this._lockTimer = setTimeout(() => this.lockInterim(), result.isFinal ? 500 : 1500);
+                    }
                 };
 
                 this.recognition.onerror = (event) => {
@@ -738,6 +2370,11 @@
                 };
 
                 this.recognition.onend = () => {
+                    // Sessão encerrada de verdade: sela imediatamente qualquer
+                    // trecho ainda pendente, sem esperar o debounce.
+                    clearTimeout(this._lockTimer);
+                    if (this.interimStart !== null) this.lockInterim();
+
                     // Auto-Religamento Silencioso: Se não foi parada manual, reconecta
                     if (!this.manualStop && this.isRecording) {
                         setTimeout(() => {
@@ -750,6 +2387,72 @@
                 };
             },
 
+            // --- COMANDOS DE VOZ (pontuação e símbolos) ---
+            applyVoiceCommands(text) {
+                if (!text) return text;
+                return text
+                    .replace(/\bponto e vírgula\b/gi, ';')
+                    .replace(/\bvírgula\b/gi, ',')
+                    .replace(/\bponto final\b/gi, '.')
+                    .replace(/\bdois pontos\b/gi, ':')
+                    .replace(/\breticências\b/gi, '…')
+                    .replace(/\bponto de interroga[çc][ãa]o\b/gi, '?')
+                    .replace(/\bponto de exclama[çc][ãa]o\b/gi, '!')
+                    .replace(/\babre par[êe]ntese[s]?\b/gi, '(')
+                    .replace(/\bfecha par[êe]ntese[s]?\b/gi, ')')
+                    .replace(/\babre colchete[s]?\b/gi, '[')
+                    .replace(/\bfecha colchete[s]?\b/gi, ']')
+                    .replace(/\babre chave[s]?\b/gi, '{')
+                    .replace(/\bfecha chave[s]?\b/gi, '}')
+                    .replace(/\babre aspas\b/gi, '"')
+                    .replace(/\bfecha aspas\b/gi, '"')
+                    .replace(/\btravess[ãa]o\b/gi, '—')
+                    .replace(/\bh[íi]fen\b/gi, '-')
+                    .replace(/\barroba\b/gi, '@')
+                    .replace(/\bcifr[ãa]o\b/gi, '$')
+                    .replace(/\bporcentagem\b/gi, '%')
+                    .replace(/\bbarra\b/gi, '/')
+                    .replace(/\bnovo par[áa]grafo\b/gi, '\n\n')
+                    .replace(/\bnova linha\b/gi, '\n')
+                    .replace(/\s+([,\.;:?!)\]}])/g, '$1')
+                    .replace(/([\(\[\{])\s+/g, '$1');
+            },
+
+            // --- PRÉVIA AO VIVO (texto aparece enquanto você fala) ---
+            // Sempre SUBSTITUI o conteúdo do trecho em andamento — nunca soma —
+            // então mesmo reconhecedores que reenviam a frase inteira do zero
+            // não geram duplicação.
+            updateInterimPreview(rawProcessed) {
+                const val = this.editor.value;
+                if (this.interimStart === null) {
+                    this.interimStart = this.editor.selectionStart;
+                    this.interimLength = 0;
+                    const lastChar = this.interimStart > 0 ? val.charAt(this.interimStart - 1) : '';
+                    this.interimPrefix = (this.interimStart > 0 && !/[\s\n]/.test(lastChar)) ? ' ' : '';
+                }
+                const insertText = this.interimPrefix + rawProcessed;
+                const before = val.substring(0, this.interimStart);
+                const after = val.substring(this.interimStart + this.interimLength);
+                this.editor.value = before + insertText + after;
+                this.interimLength = insertText.length;
+                this.editor.selectionStart = this.editor.selectionEnd = this.interimStart + this.interimLength;
+                this.updateStats();
+            },
+
+            // Sela em definitivo o trecho atual: o texto já está correto no
+            // editor (foi escrito pelo updateInterimPreview), então aqui só
+            // "soltamos" a posição para que a próxima fala comece um trecho novo.
+            lockInterim() {
+                if (this.interimStart === null) return;
+                this.interimStart = null;
+                this.interimLength = 0;
+                this.interimPrefix = '';
+                this.lastInterimRaw = '';
+                this.saveState();
+                this.pushHistory();
+                this.updateStats();
+            },
+
             toggleDictation() {
                 if (!this.recognition) return;
                 
@@ -757,12 +2460,14 @@
                     this.manualStop = true; 
                     this.recognition.stop();
                     document.getElementById('btn-voice').classList.remove('btn-recording');
+                    if (!this.discreetMode) this.releaseWakeLock();
                     UI.showSwipeToast('🎙️ Ditado encerrado e salvo.');
                 } 
                 else {
                     this.manualStop = false;
                     this.isRecording = true; 
                     document.getElementById('btn-voice').classList.add('btn-recording');
+                    this.requestWakeLock();
                     UI.showSwipeToast('🎙️ Modo Transcrição ATIVO (Longa duração).');
                     try { this.recognition.start(); } catch(e) { }
                 }
@@ -848,7 +2553,51 @@
                     icon.innerHTML = `<path d="M12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7M12,2L14.39,5.42C13.65,5.15 12.84,5 12,5C11.16,5 10.35,5.15 9.61,5.42L12,2Z"/>`;
                 }
             },
-            applyFontClass() { document.body.classList.remove(...CONFIG.FONTS); document.body.classList.add(CONFIG.FONTS[this.fontIdx]); },
+            applyFontClass() { document.body.classList.remove(...CONFIG.FONTS); document.body.classList.add(CONFIG.FONTS[this.fontIdx]); if (window.LineGutter) LineGutter.update(); },
+
+            toggleFocusMode(forceState) {
+                this.focusMode = typeof forceState === 'boolean' ? forceState : !this.focusMode;
+                document.body.classList.toggle('focus-mode', this.focusMode);
+                try { localStorage.setItem(CONFIG.STORAGE_KEY_FOCUS, this.focusMode ? '1' : '0'); } catch(e) {}
+                if (window.LineGutter) LineGutter.update();
+                UI.showSwipeToast(this.focusMode ? '🎯 Modo Foco ativado' : 'Modo Foco desativado');
+            },
+
+            // --- MODO DISCRETO: Wake Lock (impede a tela de apagar sozinha
+            // e derrubar o reconhecimento) + escurecimento visual da tela ---
+            async requestWakeLock() {
+                try {
+                    if ('wakeLock' in navigator) {
+                        this.wakeLock = await navigator.wakeLock.request('screen');
+                        this.wakeLock.addEventListener('release', () => { this.wakeLock = null; });
+                    }
+                } catch(e) { /* falha comum se a aba perdeu o foco no instante do pedido */ }
+            },
+            releaseWakeLock() {
+                if (this.wakeLock) { this.wakeLock.release().catch(() => {}); this.wakeLock = null; }
+            },
+            toggleDiscreetMode(forceState) {
+                this.discreetMode = typeof forceState === 'boolean' ? forceState : !this.discreetMode;
+                document.body.classList.toggle('discreet-mode', this.discreetMode);
+                document.body.classList.remove('discreet-reveal');
+
+                const btn = document.getElementById('btn-discreet');
+                const icon = document.getElementById('icon-discreet');
+                btn.classList.toggle('btn-discreet-active', this.discreetMode);
+                btn.title = this.discreetMode ? 'Tela Discreta ATIVA (toque para desativar)' : 'Tela Discreta (use junto do Ditado)';
+                icon.innerHTML = this.discreetMode
+                    // Ícone ativo: lua cheia — sinaliza "modo noturno/oculto" ligado
+                    ? `<path d="M17.75,4.09L15.22,6.03L16.13,9.09L13.5,7.28L10.87,9.09L11.78,6.03L9.25,4.09L12.44,4L13.5,1L14.56,4L17.75,4.09M21.25,11L19.61,12.25L20.2,14.23L18.5,13.06L16.8,14.23L17.39,12.25L15.75,11L17.81,10.95L18.5,9L19.19,10.95L21.25,11M18.97,15.95C19.8,15.87 20.69,17.05 20.16,17.8C19.84,18.25 19.5,18.67 19.11,19.07C15.14,23.04 8.7,23.04 4.73,19.07C0.76,15.1 0.76,8.66 4.73,4.69C5.13,4.3 5.55,3.96 6,3.64C6.75,3.11 7.93,4 7.85,4.83C7.57,7.74 8.35,10.74 10.37,12.76C12.4,14.79 15.4,15.57 18.31,15.3M16.89,17.07C14.73,16.82 12.54,15.93 10.93,14.32C9.32,12.71 8.43,10.5 8.18,8.35C5.83,9.75 4.54,12.46 4.96,15.22C5.37,17.97 7.42,20.06 10.16,20.46C12.91,20.87 15.61,19.56 17.02,17.2C16.97,17.16 16.93,17.12 16.89,17.07Z" />`
+                    // Ícone inativo: olho riscado (padrão)
+                    : `<path d="M2,4.27L4.28,6.55L4.73,7C3.08,8.3 1.78,10 1,12C2.73,16.39 7,19.5 12,19.5C13.55,19.5 15.03,19.2 16.38,18.66L16.81,19.08L19.73,22L21,20.73L3.27,3M12,7A5,5 0 0,1 17,12C17,12.64 16.87,13.26 16.64,13.82L19.57,16.75C21.07,15.5 22.27,13.86 23,12C21.27,7.61 17,4.5 12,4.5C10.6,4.5 9.26,4.75 8,5.2L10.17,7.35C10.74,7.13 11.35,7 12,7M11.83,9C11.89,9 11.94,9 12,9A3,3 0 0,1 15,12C15,12.05 15,12.11 15,12.16M7.53,9.8C7.2,10.47 7,11.21 7,12A5,5 0 0,0 12,17C12.79,17 13.53,16.8 14.2,16.47L12.65,14.92C12.44,14.97 12.22,15 12,15A3,3 0 0,1 9,12C9,11.77 9.03,11.56 9.08,11.35L7.53,9.8Z" />`;
+
+                if (this.discreetMode) {
+                    this.requestWakeLock();
+                    UI.showSwipeToast('🕶️ Tela discreta ativa — toque para espiar');
+                } else {
+                    if (!this.isRecording) this.releaseWakeLock();
+                }
+            },
 
             // --- ATUALIZAÇÃO DA BARRA DE STATUS (METRICA 225PPM E PARÁGRAFOS) ---
             updateStats() {
@@ -871,6 +2620,8 @@
                 const lines = text.substring(0, this.editor.selectionStart).split('\n');
                 document.getElementById('lineInfo').textContent = lines.length;
                 document.getElementById('colInfo').textContent = lines[lines.length-1].length + 1;
+
+                if (window.LineGutter) LineGutter.update();
             },
 
             bindEvents() {
@@ -959,6 +2710,26 @@
 
                 document.getElementById('btn-gps').addEventListener('click', () => this.captureGPS());
                 document.getElementById('btn-voice').addEventListener('click', () => this.toggleDictation());
+
+                document.getElementById('btn-focus').addEventListener('click', () => this.toggleFocusMode());
+                document.getElementById('btn-exit-focus').addEventListener('click', () => this.toggleFocusMode(false));
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && this.focusMode) this.toggleFocusMode(false);
+                });
+
+                document.getElementById('btn-discreet').addEventListener('click', () => this.toggleDiscreetMode());
+                document.getElementById('discreetOverlay').addEventListener('click', () => {
+                    document.body.classList.add('discreet-reveal');
+                    clearTimeout(this._discreetRevealTimer);
+                    this._discreetRevealTimer = setTimeout(() => document.body.classList.remove('discreet-reveal'), 4000);
+                });
+                // O navegador solta o Wake Lock sozinho quando a aba fica oculta;
+                // se ainda estivermos gravando ao voltar, pedimos de novo.
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible' && (this.isRecording || this.discreetMode) && !this.wakeLock) {
+                        this.requestWakeLock();
+                    }
+                });
                 
                 const templateModal = document.getElementById('templateModal');
                 document.getElementById('btn-templates').addEventListener('click', () => templateModal.classList.add('show'));
@@ -991,10 +2762,19 @@
                     searchModal.classList.add('show'); 
                     document.getElementById('searchInput').focus(); 
                     document.getElementById('searchLineInfo').textContent = "";
+                    this.updateSearchUI();
                 });
                 document.getElementById('btn-close-search').addEventListener('click', () => searchModal.classList.remove('show'));
-                document.getElementById('btn-do-search').addEventListener('click', () => this.doSearch());
-                document.getElementById('searchInput').addEventListener('keyup', (e) => { if(e.key === 'Enter') this.doSearch(); });
+                document.getElementById('btn-do-search').addEventListener('click', () => this.doSearch(1));
+                document.getElementById('btn-search-prev').addEventListener('click', () => this.doSearch(-1));
+                document.getElementById('btn-replace-one').addEventListener('click', () => this.replaceOne());
+                document.getElementById('btn-replace-all').addEventListener('click', () => this.replaceAllInDoc());
+                document.getElementById('btn-replace-all-tabs').addEventListener('click', () => this.replaceAllInAllTabs());
+                document.getElementById('searchInput').addEventListener('input', () => this.updateSearchUI());
+                document.getElementById('searchCaseSensitive').addEventListener('change', () => this.updateSearchUI());
+                document.getElementById('searchInput').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') { e.preventDefault(); this.doSearch(e.shiftKey ? -1 : 1); }
+                });
             }
         };
 
@@ -1026,7 +2806,111 @@
             }
         };
 
+        // ===================================================
+        // RÉGUA DE LINHAS (REFERÊNCIA VISUAL POR PARÁGRAFO)
+        // Módulo isolado: não altera o motor de GPS, ditado,
+        // zoom ou histórico — apenas observa e desenha.
+        // ===================================================
+        const LineGutter = (function() {
+            const gutter = document.getElementById('lineNumbers');
+            const inner = document.getElementById('lineNumbersInner');
+            const editor = document.getElementById('editor');
+            let mirror = null;
+            let rafPending = false;
+
+            function buildMirror() {
+                mirror = document.createElement('div');
+                mirror.setAttribute('aria-hidden', 'true');
+                mirror.style.position = 'fixed';
+                mirror.style.top = '0';
+                mirror.style.left = '-99999px';
+                mirror.style.visibility = 'hidden';
+                mirror.style.whiteSpace = 'pre-wrap';
+                mirror.style.wordWrap = 'break-word';
+                mirror.style.overflowWrap = 'break-word';
+                mirror.style.boxSizing = 'border-box';
+                document.body.appendChild(mirror);
+            }
+
+            function syncMirrorStyle() {
+                if (!mirror) buildMirror();
+                const cs = window.getComputedStyle(editor);
+                mirror.style.width = editor.clientWidth + 'px';
+                mirror.style.fontFamily = cs.fontFamily;
+                mirror.style.fontSize = cs.fontSize;
+                mirror.style.fontWeight = cs.fontWeight;
+                mirror.style.lineHeight = cs.lineHeight;
+                mirror.style.letterSpacing = cs.letterSpacing;
+                mirror.style.paddingLeft = cs.paddingLeft;
+                mirror.style.paddingRight = cs.paddingRight;
+            }
+
+            function updateScroll() {
+                if (!inner || !editor) return;
+                inner.style.transform = `translateY(${-editor.scrollTop}px)`;
+            }
+
+            function render() {
+                if (!gutter || !inner || !editor || !mirror) return;
+                syncMirrorStyle();
+
+                const rawLines = editor.value.split('\n');
+                // Limite de segurança para documentos extremos: evita custo alto de medição.
+                // Elevado de 4000 -> 20000 linhas: cobre com folga relatórios longos de
+                // campo/TCC sem pesar a régua em aparelhos mais fracos.
+                const maxLines = 20000;
+                const lines = rawLines.length > maxLines ? rawLines.slice(0, maxLines) : rawLines;
+
+                mirror.innerHTML = '';
+                const lineDivs = [];
+                lines.forEach((lineText) => {
+                    const div = document.createElement('div');
+                    div.textContent = lineText.length ? lineText : '\u00A0';
+                    mirror.appendChild(div);
+                    lineDivs.push(div);
+                });
+
+                const paddingTop = parseFloat(window.getComputedStyle(editor).paddingTop) || 0;
+
+                const frag = document.createDocumentFragment();
+                lineDivs.forEach((div, idx) => {
+                    const label = document.createElement('div');
+                    label.className = 'line-num';
+                    label.textContent = (idx + 1).toString();
+                    label.style.top = (paddingTop + div.offsetTop) + 'px';
+                    frag.appendChild(label);
+                });
+                inner.innerHTML = '';
+                inner.appendChild(frag);
+
+                const digits = String(lines.length).length;
+                gutter.style.width = Math.max(38, 24 + digits * 7) + 'px';
+
+                updateScroll();
+            }
+
+            function scheduleRender() {
+                if (rafPending) return;
+                rafPending = true;
+                requestAnimationFrame(() => { rafPending = false; render(); });
+            }
+
+            return {
+                init() {
+                    if (!gutter || !inner || !editor) return;
+                    buildMirror();
+                    editor.addEventListener('scroll', updateScroll, { passive: true });
+                    window.addEventListener('resize', scheduleRender, { passive: true });
+                    window.addEventListener('orientationchange', scheduleRender, { passive: true });
+                    scheduleRender();
+                },
+                update() { scheduleRender(); }
+            };
+        })();
+        window.LineGutter = LineGutter;
+
         App.init();
+        LineGutter.init();
     })();
     </script>
 </body>
